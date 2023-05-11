@@ -1,4 +1,4 @@
-# A Modern Curriculum for Biologists
+## A Modern Curriculum for Biologists
 
 1. Biostatistics
 2. Data Analysis (R), I have also included the R book that I wrote (with data sets from Whitlock and Schluter) to accompany the Data Analysis in R course.
