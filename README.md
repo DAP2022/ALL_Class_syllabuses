@@ -9,7 +9,7 @@ Here are the syllabuses for the following courses that I have created and taught
 
 <img width="579" alt="Screen Shot 2023-02-22 at 3 30 39 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/80bec0a5-e2b5-402e-9a12-5147b0cbc10f">
 
-I will also continue to add the general outlines of two curriculum pathways, S.P.A.R.C. and I.H.E.C., that integrate experiential learning with skills necessary in research labs and for medical training. 
+I will also add the general outlines of two curriculum pathways, S.P.A.R.C. and I.H.E.C., that integrate experiential learning with skills necessary in research labs and for medical training. 
 
 ## 1. SPARC (Supporting Professional and Research Competencies):
 
