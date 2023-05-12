@@ -1,12 +1,11 @@
 # A Modern Curriculum for Biologists
 
+Here are the syllabuses for the following courses that I have created and taught at the University of Rochester.
 1. Biostatistics
 2. Data Analysis (R), I have also included the R book that I wrote (with data sets from Whitlock and Schluter) to accompany the Data Analysis in R course.
 3. Introduction to progamming for biologists' (Python)
 4. "Exploring Bias in Algorithms: the New 'Jim Code'" 
 5. "Focusing on Bayes' Theorem" are all available.
-
-I will add Jupyter notebooks and rmd files that accompany each lecture of each course as time allows.
 
 <img width="579" alt="Screen Shot 2023-02-22 at 3 30 39 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/80bec0a5-e2b5-402e-9a12-5147b0cbc10f">
 
