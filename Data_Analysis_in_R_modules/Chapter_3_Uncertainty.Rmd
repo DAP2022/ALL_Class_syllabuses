@@ -1,0 +1,209 @@
+---
+title: "Chapter_3"
+author: "Danielle A Presgraves"
+date: "1/29/2018"
+output: pdf_document
+---
+Note: This is module 4 but it corresponds to Chapter 3 in the "R Book". 
+
+In Chapter 3 (of the RBook), we begin to address uncertainty in our data sets.
+We will:
+
+1. Re-fresh the concept of sampling distribution (the links to simulations and the small summary in chapter 3 of the RBook are for your own edification, we won't cover them in this .rmd file). Often, in statistics we are estimating the population mean by using a sample. When we calculate the sample mean, we want to put an interval on that estimate that we have confidence contains the true population mean value.  
+
+2. Using the Caffeine, and Starbucks data sets.
+a. Use the *t distribution* and *t test* to get the 95% Confidence interval for the difference between the mean caffeine levels in starbucks coffee versus all the other brands. Remember that the * t distribution* has assumptions that are not necessary met by this particular data set but we will carefully define the *t distribution* - and its assumptions - later on in chapter 7. 
+b. Summary statistics commands(mean(), sd(), median(),summary(), quantiles)
+c. Investigate the properties of boxplots (and, somewhat, histograms)
+
+3. Using a direct input data set (the ten salaries are given in chapter 3 or in the .rmd file below)
+a. Deploy summary statistics, including quantiles
+b. Answer the question: Can ggplot2 help us plot uncertainty? 
+
+4. Learn basic simulation of Bootstraps: What happens when we can't capture uncertainty using known out-of-the-box distributions? A gentle introduction to some (just a tiny amount!) programming using R.
+
+We read in the files:
+```{r}
+Caffeine<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/caffeine.csv")
+Star_Caff<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/caffeine-Starbucks.csv")
+attach(Caffeine)
+attach(Star_Caff)
+```
+
+This cell just ensures that we have the column names correct! And reminds us of these functions...
+```{r}
+names(Caffeine)
+names(Star_Caff)
+```
+Basic data exploration - remember that it is good programming to always 'park' the results of your function into a variable that can be called later:  
+```{r}
+# mean and standard deviation and median of each of the brands
+# remember that there is often a difference between the values you get with the mean and 
+# with the median - especially if there is a skew. 
+mean_Caff<-mean(Caffeine$Caffeine_Brand)
+sd_Caff<-sd(Caffeine$Caffeine_Brand)
+median_Caff<-median(Caffeine$Caffeine_Brand)
+# we call the variables that we created
+mean_Caff
+sd_Caff
+median_Caff
+# we proceed to do the same analysis but with starbucks specifically instead 
+# of all the brands
+mean_Star<-mean(Star_Caff$Caffeine_Starbucks)
+sd_Star<-sd(Star_Caff$Caffeine_Starbucks)
+median_Star<-median(Star_Caff$Caffeine_Starbucks)
+mean_Star
+sd_Star
+median_Star
+```
+Let's display these two files: 
+first up, starbucks (this is sort of cheating because there is only one category but boxplots can be informative about spread so it can provide some useful preliminary information)
+```{r}
+# we should put a title etc on this plot. 
+boxplot(Star_Caff$Caffeine_Starbucks)
+```
+Next up, we add the Caffeine data set to the Starbucks data set(note that there is only one data point per brand in this file, so it doesn't produce the box part of a boxplot. See the BP.csv data below for a re-fresher on what that type of plot should look like.)
+```{r}
+# remember: we are writing the function out in the following way so that the arguments
+# don't run off the page when we render the document!
+boxplot(Caffeine$Caffeine_Brand,Star_Caff$Caffeine_Starbucks,
+          main="Comparing Other Brands to Starbucks for caffeine level",
+          ylab="mg caffeine per 16 ounce of coffee")
+```
+Since there is only one data point per brand, we merged them to produce one boxplot. Let's remember the BP data set and especially note the las=2 argument to rotate the x axislabels.
+```{r}
+BP<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/BP.csv")
+# note: I did not attach the BP dataset since I wanted to remind you of how to call columns
+# in a dataframe that is not attached. 
+boxplot(BP$SBP~BP$Village,las=2)
+```
+
+Now, we will use the t.test() to obtain a 95% confidence interval for the true difference in means of the caffeine level of the "all brands" and the "Starbucks" datasets. 95% is the default argument in the t.tests but it is explicitly included in the chunk below so you can see it. __With a two sample t.test, you are comparing the mean of one data set (Caffeine data set) to the mean of another data set (Star_Caff data set) to see if there is a statistically significant difference between them.__ In our case, the mean of the Caffeine data set is smaller than the mean of the Star_caff data set so the confidence interval of the difference between them will be negative. If we swapped the two arguments around, the difference would be positive. (shown here as caff_ttest_1 and caff_ttest_2). This is a tangent but notice that, as the default, R uses the Welch approx two sample t-test. That isn't entirely appropriate unless variances between the two groups are vastly different but it is a conservative strategy- and it is better than using the two sample t test as a default in case your variances are very different - so many statistical programming languges use Welch as a default. We'll see this in a bit more detail in Chapter 7 (t tests).
+```{r}
+caff_ttest_1<-t.test(Caffeine$Caffeine_Brand,Star_Caff$Caffeine_Starbucks, 
+                     conf.level = 0.95)
+#call the variable where we have stored the results of the t-test
+caff_ttest_1
+#run the second t-test where we swap the order of two samples
+caff_ttest_2<-t.test(Star_Caff$Caffeine_Starbucks,Caffeine$Caffeine_Brand, 
+                     conf.level = 0.95)
+#call the variable where we have stored the results of the t-test
+caff_ttest_2
+```
+The quantile function is another way to double check your values in your boxplot and the results of the median() function: 
+```{r}
+# we specify the bottom 5 and top 5% values by using the c() function
+Top_bottom_5<-quantile(Star_Caff$Caffeine_Starbucks,c(0.05,0.95))
+Top_bottom_5
+# without specifying the particular quantiles that you want, the quantile function will 
+# return 0, 25, 50, 75, 100%.
+quantile(Star_Caff$Caffeine_Starbucks)
+# the 50% percentile should correspond the median value in the boxplot and in the value 
+# produced by the median() function.
+```
+
+Now, we move on to our directly inputted data: 
+
+Here are ten salaries of recent graduates (I have made up this data set - I like to hope that it is much, much higher). First, we want to examine the data set.
+```{r}
+# input data using c()
+salaries<-c(44617,7066,17594,2726,1178,18898,5033,37151,4514,4000)
+# put a happy little plot here 
+plot(salaries, xlab="Individual",ylab="Salary")
+# how about a histogram? We could re-set the binning for the histograms to see 
+# if there is a pattern.
+hist(salaries)
+# The default binning size follows 'sturges' but we could explicitly set, say, 
+# 20 bins for our data:
+hist(salaries, breaks=20)
+# basic information like mean and stand deviation. 
+sal.mean<-mean(salaries)
+sal.sd<-sd(salaries)
+sal.median<-median(salaries)
+sal_num<-length(salaries)
+# we can call the variables
+sal.mean
+sal.sd
+sal.median
+sal_num
+# double check the summary information. Notice that there is a slight different between 
+# the median calculated in the summary than the one calculated with the median function. 
+
+# Why do you think that might be? 
+summary(salaries)
+```
+Now we are going to use the **t distribution** to the calculate 90% confidence interval values. We haven't discussed the **t distribution** yet, but for 90% confidence interval ends, the t distribution is symmetric so we use the qt() function with the arguments 0.95 on the high end and 0.05 on the low end. The **t distribution** is robust to many violations of its assumptions but, as we will see later on (chapters 5, 6 and 7), we will need to test the assumptions of data sets before we apply the **t distribution**. NB: qt() is a function that gives us the quantiles if our data set had a *t distribution* and shouldn't be used with other distributions that are not symmetric (ie. Chi squared distributions).
+
+```{r}
+# t distribution has n-1 degrees of freedom. length(x) gives us 'n' so we have to subtract
+# 1 to get the degrees of freedom. 
+CI<-qt(c(0.05,0.95),length(salaries)-1)
+# translate this cut off value that defines the top and bottom 5% to a standard error
+StError<-qt(0.95,9)*(sd(salaries)/sqrt(length(salaries)))
+# in order to use ggplot2 to graph the errorbars/CI, we need to calculate the upper limit 
+# and the lower limit of the SE ourselves.
+Upperlimit<-mean(salaries)+StError
+Lowerlimit<-mean(salaries)-StError
+Upperlimit
+Lowerlimit
+```
+Once again, ggplot2 will help us graph uncertainty with a **geom_errorbar** or **geom_linerange** layer.
+We're going to see if we can put confidence intervals on this plot by using ggplot2:
+```{r}
+#convert x to data.frame
+y<-c(1,2,3,4,5,6,7,8,9,10)
+z<-cbind(y,salaries)
+class(z)
+x2<-as.data.frame(z)
+class(x2)
+x2
+names(x2)
+# load ggplot2 library
+library(ggplot2)
+ggplot(data=x2)+
+  geom_linerange(mapping=aes(x=1,ymin=Lowerlimit,ymax=Upperlimit),position='identity',col="blue")+
+  geom_point(mapping=aes(x=1,y=x2$salaries))
+# what will this look like with geom_errorbar instead of geom_linearange?
+ggplot(data=x2)+xlim(0,10)+geom_errorbar(mapping=aes(x=1,                                      ymin=Lowerlimit,ymax=Upperlimit),col="blue")+
+  geom_point(mapping=aes(x=1,y=x2$salaries))
+```
+
+Finally: Bootstrap! Bootstraps are used to determine the confidence intervals for data that is not well behaved (it isn't normally distributed), or that can't be replicated (constructing phylogenies). Basically: when we have no other (easier) tools to use, we need to simulate values. The following R program has a bit more commentary in chapter 3 of your R book. 
+```{r}
+# create an empty list that we will fill with simulated mean values
+bstrap<-c()
+# ensure that it is empty by calling it before the loop has run
+bstrap
+# 1000 replicates of picking 10 values, from the 10 salary data points, at a time to 
+# populate the ten salaries that we are expecting. Since we are replacing the value on each
+# pick, it is entirely possible that in any given ten salaries, you have picked one 
+# multiple times, ie. 17594 
+for(i in 1:1000){
+  bsample<-sample(salaries,10,replace=TRUE)
+  # the sample function is a built in function that samples the data randomly. So for any 
+  # one run, you might have ten salaries that look like this: 
+  # 17594,5033,17594,18898,44617,2726,1178,,5033,37151,4000
+  # where some salaries from the original data set are represented more than 
+  # once and some are not represented at all.  
+  bestimate<-mean(bsample)
+  # populate that originally empty list
+  bstrap<-c(bstrap,bestimate)}
+# calculate the quantiles of the bstrap
+# in contrast to the qt() which uses the t-distribution to approximate what the data would
+# look like if it conformed to a t distribution, the quantile of the bstrap orders the data
+# from smallest to largest out of the 1000 rounds that we did above and then takes, in this
+# case, the 50th value (corresponds to bottom 0.05) and the 950th value which corresponds 
+# to top 5% of the values in the 1000 element bstrap vector
+quantile(bstrap,0.05)
+quantile(bstrap,0.95)
+quantile(bstrap,0.025)
+quantile(bstrap,0.975)
+#if we call the bstrap variable, it will give us all 1000 values. 
+bstrap
+```
+
+Remember to detach!
+```{r}
+detach(Caffeine)
+detach(Star_Caff)
+```

@@ -1,0 +1,381 @@
+---
+title: "Chapter_8"
+author: "Danielle A Presgraves"
+date: "8/04/2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+### Introduction: 
+In this module, we are going to investigate *whether or not * your data is normally distributed, and if it has equal variances (or close enough to fulfill the underlying assumptions of most parameteric tests). We will use visual assessment and introduce some formal tests to confirm or reject the initial visual judgment. We will also learn about some *non-parametric* - but useful!- tests such as Welch's approximate t-test (used when two groups have vastly difference variances), Wilcoxon test (the non-parametric alternative to a paired t test or a Mann Whitney U test, depending on how the variables are inputted into the formula), simulations, and Kaplan-Meier estimators and survival curves. 
+
+The most important questions about your data set: Is it normally distributed and, if there is more than one sample, are the variances (really most tests rely on equal-ish standard deviations but statistics tends to use "homogeneity of variances" a lot and equal variances can be considered the same as equal standard deviation) equal? As working researchers, you will inevitably create your own pipeline which you will fine tune as necessary. In general, a good pipeline would be:
+
+** Visual assessment --> Formal tests of assumptions (usually based on the visual assessment) --> Formal tests that rely on the assumptions (ie. t-tests and other parametric tests) or Formal tests that don't rely on the assumptions (ie. welch's approximate t-test, Wilcoxon test, simulation, or Kaplan-Meier estimator and curve)**
+
+1. You can use online simulations to explore to what extent we can violate the assumptions of the t test and still **appropriately** use the *t test* to analyze data. (for instance, http://onlinestatbook.com/stat_sim/sampling_dist/index.html helps you see what normally distributed samples look like). 
+
+*Appropriately using a test* in statistics usually translates to: "this test *actually* gives us the $\alpha$ value that we have stated rather than overestimating or underestimating Type I error thereby leading our audience astray". 
+
+2. Ask our assumptions met?
+
+We can use: 
+
+A. visual assessment (discussed in Chapter 6/module 7)
+
+  i. Histogram
+
+  ii. Boxplot
+
+  iii. Normal Quantile Plot (or a Q-Q plot if testing similiar shape)
+  
+B. Formal test of normality: *Shapiro-wilk test*
+
+C. Formal test that variances are the same/similar enough
+
+  i. Bartlett(we'll see this later - in the ANOVA chapter)
+  
+  ii. variance test (each population MUST be normally distributed to use this test)
+
+#### Visual tests: 
+Let's create *four* data sets where one of them, x, is normally distributed and one of them, y, is not normally distributed (Poisson). We used a similar 'trick' in chapter 6_7.rmd. We also create two other variables that are normally distributed with either significantly different variance but the same mean (z) or the same mean and sd as the poisson distributed variable (q).
+We can then run through some visual assessments to help us get used to what data will look like 'ideally': 
+
+```{r}
+# normally distr
+x<-rnorm(100,0,1)
+# poisson distr
+y<-rpois(100,1)
+# normal distribution with same paramters as poisson distribution: mean =1, variance =1
+q<-rnorm(100,1,1)
+# second variable that is normally distributed but has a very different variance
+# that the variable x
+z<-rnorm(100,0,6)
+#visual assessments
+hist(x,main="normal distribution",col="Red")
+hist(y,main="Poisson distribution",col="Blue")
+hist(q, main="Normal distribution with same mean
+     and sd as Poisson Distribution", col="Dark Blue")
+hist(z,main="Normal Distribution with large sd",col="Purple")
+boxplot(x,y,q,z)
+qqnorm(x,main="Normal quantile plot")
+qqline(x)
+qqnorm(y,main="Poisson quantile plot")
+qqline(y)
+# -------------------
+# I mentioned last time that instead of qqnorm, you can compare two distributions directly by using qqplot() function. In the following cases, there are three comparisons: 
+#1. Normal to Poisson distribution centered on same mean
+qqplot(x,y, main= "Normal distribution compared to Poisson")
+#2. Normal distribution, mean =0  to Normal Distribution, mean =1 sd the same 
+qqplot(x,q, main = "Normal distribution with mean =0 compared to \n Normal distribution with mean =1 but same stand dev")
+#3. Normal distribution, mean =0, sd=1 compared to Normal Distribution with mean=0 sd=6
+qqplot(x,z,main = "Two Normal distributions who both have \n mean =0 but vastly different stand dev")
+# you can see from this last plot that qqplot doesn't warn us about when 
+# the variances aren't equal!! 
+```
+
+#### Now for some formal tests:
+
+**Shapiro.wilk tests the null hypothesis, Ho: x~Normal distributed**. This means that if the shapiro.wilk test is rejected, then the distribution is significantly different from a Normal Distribution. Note: In the next chapter, ANOVA, we will see that you need to test each group for normality and we will use the by() function to do that. 
+```{r}
+# are these variables normally distributed? Let's hope x,q and z are and 
+# that y is not since they were defined that way in the R cell above.
+shapiro.test(x)
+# this should not be normally distributed since it simulated from a POISSON distribution!
+shapiro.test(y)
+shapiro.test(q)
+shapiro.test(z)
+```
+
+#### Are the variances equal (or, at least, similar enough?) between two samples. 
+Our best visual assessment doesn't sufficiently warn us about very different standard deviations/variances between two distributions. So, now we move on to a formal quantitative test: 
+
+For now, we will focus on *var.test* but there is another test called *bartlett.test* that we will use when we learn about ANOVA (we need linear models to use it and we'll learn about those in chapter 10.)
+```{r}
+# let's have a look at the standard deviations of the four previously manufactored distributions:
+sd(x)
+sd(y)
+sd(q)
+sd(z)
+# for fun, I have played with the conf.level and changed it from it's
+# default of 0.95 to 0.99. 
+# You will notice that you are now providing TWO arguments in the var.test 
+# function since you are comparing the variances of TWO samples. I have
+# compared x and y, x and z and x and q below:  
+x_y_f_test<-var.test(x,y,conf.level = 0.99)
+x_y_f_test
+var.test(x,z,conf.level = 0.99)
+var.test(x,q,conf.level=0.99)
+```
+#### Welch's approximate t-test: 
+Welch's t-test is most appropriate if we know that the standard deviations are >3. However, Welch's approx t-test is the default output of the t.test() and you need to explicitly provide the argument var.equal=TRUE in order to not use it! Note the difference in the degrees of freedom in the output and think about why that is the case. 
+```{r}
+# let's compare what happens when we use welch's approx t test, since 
+# variances are different to what results from just using a regular t-test
+# and the z distribution has a variance that is 6 times the variance
+# of the x distribution. 
+welch_t<-t.test(x,z)
+non_welch_t<-t.test(x,z,var.equal = TRUE)
+# call them! ESPECIALLY LOOK AT THE DEGREES OF FREEDOM!!
+welch_t
+non_welch_t
+# Now let's see what happens when we compare two distributions that have
+# similar shapes and similar variances: x and q
+welch_t_x_q<-t.test(x,q)
+non_welch_t_x_q<-t.test(x,q,var.equal = TRUE)
+welch_t_x_q
+non_welch_t_x_q
+# let's see how significant the test is between two completely different
+# distributions which have the same mean (1) and sd (1). 
+# Variable q (normal distribution) and variable y (poisson distribution)  
+diff_distr<-t.test(q,y)
+diff_distr
+# pretty robust even though the distributions are different, eh? 
+# Althought the distributions aren't actually hugely different: 
+par(mfrow=c(1,2))
+plot(density(q), main="Normal distr mean =1 and sd=1")
+plot(density(y), main="Poisson dist lambda=mean=variance=1")
+```
+#### Can we 'transform away' violations so that we can revert to a parametric test? 
+Let's see if we can 'transform away' any violations from normality. I have little faith that transformations will usually work - they are often effort that ends up wasted, but you still don't want to skip this part of the pipeline because it sometimes DOES work and then you are able to use the much more powerful parametric test! So I am a practical pessimist when it comes to transformations. Understand them and learn how to use them anyway!
+A common transformation with biological data is the log transformation. This is because biological data is often skewed and log transformations tend to help that type of data become more normally distributed: 
+```{r} 
+#log transformation; log()
+transformed_normal<-log(x)
+transformed_normal
+#let's see visually if this has helped at all.Note that it should still be
+# pretty normally distributed because the variable x is normally distributed 
+qqnorm(transformed_normal)
+qqline(transformed_normal)
+# do the same thing but with the Poisson distributed variable y
+transformed_poisson<-log(y)
+transformed_poisson
+# Oh. Wait - why isn't this working? Let's remember what happens when you take a log(0)...
+y
+# ah... so transformation won't work with certain distributions....
+# I have hashed the following out. Why don't you think they work? 
+#qqnorm(transformed_poisson)
+#qqline(transformed_poisson)
+```
+
+#### Wilcox test:
+Transformation let us down (it often does)! We will need to use a non-parametric test. The Wilcox-test can be used. Remember: Depending on how the arguments of the function are inputted, the Wilcocon signed rank test can be equivalent to a non-parametric paired t-test OR to a Mann Whitney U test. You can read more about this in the help pages or google (of course). In the example below, this function is equivalent to the MWU test because two independent arguments are inputted and separated by a comma. Let's compare the answers from wilcox to the results from the t.test: 
+```{r}
+# Mann Whitney test is performed which is the non-parametric alternative 
+# to the two sample t test
+wilcox.test(x,z,paired=FALSE)
+#compare the normal and the poisson distributed variables which have 
+# different means so Ho should be rejected!@
+wilcox.test(x,y)
+# non-parametric alternative,wilcoxon signed rank test, to paired t test
+wilcox.test(x,z,paired=TRUE)
+```
+#### Simulations
+Are we living in a simulation? Maybe, but we don't know. As we figure it out, we can learn how to program simulations. 
+
+If we can't use a t.test, we can't transform away any deviations from normality, and the non-parametric version of the test is not satisfying for whatever reason, we have one tool left: Let's try some simulations. For this, we'll use the rbeta function. The beta distribution, generally, is a catch-all distribution that can produce other distributions (Binomial, normal etc) depending on the two parameters: $\alpha$ and $\beta$ fed into it. It is an important distribution in computational biology so I wanted the opportunity to show it to you!
+
+This is another example that I have taken from the count bayesie website (https://www.countbayesie.com/blog/2015/4/25/bayesian-ab-testing). I can't recommend his website/blog and his book enough as an accessible introduction to the joys of programming and probability! This example deals with a common procedure called an A/B test which determines which of two options is more popular (in the example given, count bayesie is testing two styles of website but the A/B test is generalizable to other contexts. If you want a job after you graduate, the A/B test is used EVERYWHERE...):  
+```{r}
+runs<-100000
+# page A converted 20 individuals and 100 did not convert after exposure to page type A
+a.samples<-rbeta(runs,20,100)
+# page b 38 converted and 110 did not convert
+b.samples<-rbeta(runs,38,110)
+# we want to know the difference between A and B in convincing people to sign
+# up but this difference isn't normally distributed.This would be equivalent 
+# to a one sided t-test where Ho: a-b=0 and Ha: a>b
+mc.p.value<-sum(a.samples>b.samples)/runs
+mc.p.value
+# let's see what this looks like
+hist(b.samples/a.samples)
+```
+we can probably run the above as a t.test as well just to have a comparison (note that we need to specify greater as an argument since the alternative hypothesis is one sided!), but the conditions for a t test aren't met so this isn't valid. 
+```{r}
+t.test(a.samples, b.samples,var.equal=TRUE, alternative="greater")
+```
+#### Kaplan-Meier Estimator and Survival Curve
+There are a number of useful distributions that describe "time until a successful event", including common distributions such as the geometric distribution and the exponential distribution. These distributions are effective at explaining many biological problems and processes as long as their assumptions are met. 
+
+In health data, we often are interested in estimating the *'time until death'*. It is, admittedly, a bit morbid to label 'death' as a 'success', but it is unambiguous state and so it is the convention. With many circumstances, researchers end up with so-called 'right censored' datasets. That is, many individuals join a study, but then some drop out and their information is no longer collected (that is why these are called "right" censored, since the data is thought to start on the left side of the page and time is usually pointing 'right' along the horizontal axis of the page). There is a particular statistical challenge that arises when individual data points in a dataset are incomplete. If these censored data points are excluded in the data analysis, the resulting estimator is biased, and that is a *HUGE, MASSIVE* problem. However, our conventional parametric distributions and estimators rely on assumptions that are not met when data is incomplete. 
+
+So: what do we do? 
+
+Enter the Kaplan-Meier estimator. It is a popular method (including in medicine) to describe the frequency of survival in particular time frames after a treatment is applied. That is, after chemotherapy to treat a particular type of cancer, a patient might have an X% of survival after Y months. The KM estimator is used more widely in biology than just in describing survival rates after cancer treatment, but survival after medical treatment is often where individuals first encounter the concept! You have almost certainly seen a KM curve, even if you didn't realize that was what it was called. You can get an overview of KM on Wikipedia: https://en.wikipedia.org/wiki/Kaplan–Meier_estimator
+
+We will need to download some libraries - with built in data sets - to see how to create a Kaplan-Meier Curve. You will also want to call these packages to ensure that your rmd file knits properly. 
+
+I have taken the following example (with some slight modifications) from Emily Zabor's excellent distillation of KM curves in R that can be found here: 
+https://www.emilyzabor.com/tutorials/survival_analysis_in_r_tutorial.html#Estimating_survival_curves_with_the_Kaplan-Meier_method
+
+```{r,echo=FALSE}
+# load packages
+library(knitr)
+library(tidyverse)
+library(survival)
+library(survminer)
+# Now that we have loaded these libraries, we can set output options <---- this is useful!
+opts_chunk$set(fig.width = 5, fig.height = 4)
+opts_knit$set(warning = FALSE,message = FALSE)
+
+```
+Following Zabar's example, we will use the 'lung' dataset that is built-in to the survival package. In this dataset, males are assigned 1, females are 2. Under the Status columns, the Censored individuals are given 1 and dead individuals are assigned the number 2.
+```{r}
+#using graphing that we have already seen, let's do a quick histogram. 
+hist(lung$time, xlab="Length of Survival Time", main="Histogram of Survial Time \n in Lung cancer Patients")
+
+# now for something much fancier (that uses ggplot2, just because...)
+ggplot(lung, aes(x = time, fill = factor(status))) +
+  geom_histogram(bins = 25, alpha = 0.6, position = "identity") +
+  scale_fill_manual(values = c("blue", "red"), labels = c("Censored", "Dead")) +
+  labs(x = "Days",y = "Count")
+```
+Here is a quote from the Zabar's example: "The Kaplan-Meier method is the most common way to estimate survival times and probabilities. It is a non-parametric approach that results in a step function, where there is a step down each time an event occurs.
+
+- The `Surv` function from the `survival` package creates a survival object for use as the response variable in a model formula. There will be one entry for each subject that is the survival time, which is followed by a `+` if the subject was censored. Let's look at the first 10 observations:""
+
+```{r survfunc}
+Surv(lung$time, lung$status)[1:10]
+# we can also peek at the columns in the lung dataset. You can confirm that the censored
+# data appears in the dataframe... since the time column is adjacent to the status column
+# THIS IS ALMOST ALWAYS A GOOD PLACE TO START YOUR ANALYSIS!
+lung[1:10,]
+```
+Now, we will take this object, and we will use the survfit function to 
+create the survival curve. (here is the more information: https://www.rdocumentation.org/packages/survival/versions/2.11-4/topics/survfit)
+
+```{r,echo=FALSE}
+# we fit the survival curve for the entire 'Surv' object that we created in the R chunk
+# above and we will fit it on x="1". WHY DO YOU USE 1? This is the convention for 
+# finding the expected survival for the entire group and not a subset. 
+f1 <- survfit(Surv(time, status) ~ 1, data = lung)
+#peek at the names/columns in this object --- we'll do this quite a bit when we discuss ANOVA and correlation/regression
+f1
+# we can see that we have 228 patients being tracked (originally) and 165 individuals were followed for the entire length of the study (63 individuals were censored). 
+# we can also see that we have 310 days of median survival for the uncensored individuals and even the upper and lower bounds on the confidence interval!
+print("--------------------Now let's use names() function-------------------------------")
+names(f1)
+print("-----------------Now let's use summary() function-------------------------------")
+#summary(f1)
+```
+
+Some key components of this 'survfit' object that will be used to create survival curves include:
+
+- time, which contains the start and endpoints of each time interval
+- surv, which contains the survival probability corresponding to each time
+
+Great. Now let's plot this using just Base R: 
+```{r}
+plot(survfit(Surv(time, status) ~ 1, data = lung), 
+     xlab = "Days", 
+     ylab = "Overall survival probability")
+```
+Zabar has a nice summary: 
+
+    * The default plot in base R shows the step function (solid line) with associated confidence intervals (dotted lines)
+    * Horizontal lines represent survival duration for the interval
+    * An interval is terminated by an event
+    * The height of vertical lines show the change in cumulative probability
+    * Censored observations, indicated by tick marks, reduce the cumulative survival between intervals. (Note the tick marks for censored patients are not shown by default, but could be added using the option mark.time = TRUE)
+
+But we can make it even more attractive by using a ggplot-derived function. 
+Zabar suggests: 
+```
+Alternatively, the `ggsurvplot` function from the survminer package is built on ggplot2, and can be used to create Kaplan-Meier plots. Checkout the [cheatsheet](https://rpkgs.datanovia.com/survminer/survminer_cheatsheet.pdf) for the survminer package.
+```
+```{r}
+ggsurvplot(
+    fit = survfit(Surv(time, status) ~ 1, data = lung), 
+    xlab = "Days", 
+    ylab = "Overall survival probability",col="Blue")
+```
+
+- The default plot using ggsurvplot shows the step function (solid line) with associated confidence bands (shaded area). 
+- The tick marks for censored patients are shown by default, somewhat obscuring the line itself in this example, and could be supressed using the option `censor = FALSE`
+
+Here are a few extra fancy things you can do with this curve that are useful: 
+
+1. Estimating $x$-year survival
+
+One quantity often of interest in a survival analysis is the probability of surviving beyond a certain number ($x$) of days or years.
+
+To estimate the probability of surviving to $1$ year, use the summary function with the times argument (*Note* the time variable in the lung dataset is actually in days, so we need to use times = 365.25)
+
+```{r 5yrest}
+summary(survfit(Surv(time, status) ~ 1, data = lung), times = 365.25)
+```
+
+The $1$-year probability of survival in this study is given in the surv column of the surv object. The associated lower and upper bounds of the 95\% confidence interval are also displayed.
+2. Median survival time? 
+This is the time that corresponds to the survival probability of 50%. Note: Since survival times are not expected to be normally distributed, median is a more appropriate summary value than the mean. We can obtain the median directly from the f1 survfit object that we created above. 
+```{r}
+summary(f1)$table["median"]
+# calling it in the following way will also give you CI around the median and remind you 
+# how many individuals are left, in this case 165 individuals are left in the study at
+# 310 days. 
+survfit(Surv(time, status) ~ 1, data = lung)
+```
+
+3. Sometimes you want the point on the survival curve that corresponds to the $x$-year survival probability and you also want to compare that to the median survival time.
+
+The $1$-year survival probability is the point on the y-axis that corresponds to $1$ year on the x-axis for the survival curve. This isn't particularly pretty, but I did make the median arrow "Blue" in order to distinguish it from the mean. 
+
+```{r, fig.height = 5}
+plot_main <- 
+  ggsurvplot(data = lung, fit = f1,
+    xlab = "Months",
+    legend = "none",
+    xscale = 30.4,
+    break.x.by = 182.4, 
+    risk.table = TRUE,
+    risk.table.y.text = FALSE)
+plot1 <- plot_main
+plot1$plot <- plot1$plot + 
+  geom_segment(x = 365.25, xend = 365.25, y = -0.05, yend = 0.4092416, 
+               size = 1.5) +
+  geom_segment(x = 365.25, xend = -40, y = 0.4092416, yend = 0.4092416,
+               size = 1.5, 
+               arrow = arrow(length = unit(0.2, "inches")))+
+  geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, size = 1.5, 
+               arrow = arrow(length = unit(0.2, "inches")),colour="Blue")
+plot1
+```
+We can also compare the survival rate between groups using a log-rank test. A popular comparison is between females and males which happens to be a straightforward column in the lung dataset! The survdiff function uses a goodness of fit test to compare the  
+
+```{r}
+sex_diff_surv<-survdiff(Surv(time, status) ~ sex, data = lung)
+#remember males=1 and females =2
+sex_diff_surv
+```
+```{r}
+plot(survfit(Surv(time,status) ~ sex, data=lung), main = "Plot of Survival Curves by sex", xlab = "Length of Survival",ylab="Proportion of Individuals who have Survived",col=c("blue","red"))
+legend("topright", legend=c("men", "women"),fill=c("blue","red"),bty="n")
+```
+
+__________________________
+Here is a tangential point that compares TWO survival curves: one that does NOT include censored data and one curve that does include censored data. You can immediately see why including censored data (that is, including the information that we have until we don't have it) is important to getting an accurate probability of survival.
+
+
+* Impact on $x$-year survival of ignoring censoring:*
+
+- Imagine two studies, each with 228 subjects. There are 165 deaths in each study. No censoring in one (orange line), 63 patients censored in the other (blue line)
+- Ignoring censoring leads to an **overestimate** of the overall survival probability, because the censored subjects only contribute information for **part** of the follow-up time, and then fall out of the risk set, thus pulling down the cumulative probability of survival
+
+```{r echo = FALSE, message = FALSE, warning = FALSE, fig.height = 6}
+fakedata2 <- lung %>% 
+  mutate(time = ifelse(status == 2, time, 1022), 
+         group = "No censoring") %>% 
+  full_join(mutate(lung, group = "With censoring"))
+fit3 <- survfit(Surv(time, status) ~ group, data = fakedata2)
+ggsurvplot(
+  data = fakedata2, 
+  fit = fit3,
+  xlab = "Months",
+  legend = "bottom",
+  legend.title = "",
+  legend.labs = c("No censoring", "With censoring"),
+  xscale = 30.4,
+  break.x.by = 182.4, 
+  risk.table = TRUE,
+  risk.table.y.text = FALSE)
+```

@@ -1,0 +1,74 @@
+---
+title: "Chapter_2_part_a_Examples"
+author: "Danielle A Presgraves"
+date: "7/24/2019"
+output: word_document
+---
+## Pre-amble:
+In today's lecture we are going to work through Chapter 2 in your Rbook. Chapter 2 is concerned primarily with basic plotting functions. We saw how to import and create some basic graphs out of necessity last week (it is challenging to learn R until we can manipulate data!). If you remember, in the "Initial_Data_Exploration.rmd" file, we learned to create a mosaic plot out of tabular datasets (like the built in Titanic dataset) and to create a basic scatterplot. Remember that you can always supplement this basic information with more detailed information by using google <-- this is one of the many reasons why **R** is such a great language.  
+
+Lindsey Hall pointed out that there are some really great websites that help you choose what graph you might need depending on your data. One of these websites can be found here: 
+https://www.data-to-viz.com/#boxplot
+
+### Now we will re-visit importing data. 
+If you have BP in your memory already, hurray! If not remember the file.choose() function (and recall that you need to use it in the console quadrant to get the hard link to the file). We'll run through the functions: names(), attach(), detach(). 
+```{r}
+BP<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/BP.csv")
+Blowflies<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/BLOWFLIES.csv")
+attach(BP)
+attach(Blowflies)
+```
+
+You can also input data directly by hand. To do this, you need to use the c() function. 
+
+```{r}
+heights<-c(140, 145, 143, 122)
+# the c() function allows you to read in these individual data points and stores 
+# them in a new vector called "heights" which you can then "call":
+heights
+```
+
+###Basic Plotting:  
+
+You first need to identify what type of variable you have. There are several commands (other than just realizing if you have numeric or categorical variables in your datafrae by looking at the file itself):
+is.numeric(), is.vector() etc. To see this, let's use the basic data that we inputted by hand, the heights data, as an arguement for the most often used of these data identifying commands:
+```{r}
+#the heights data is numeric and it is a vector and it is not character, ie. letter, data
+is.numeric(heights)
+#should be true
+is.vector(heights)
+#should be true
+is.character(heights)
+#should be false
+```
+#### Scatterplots
+Just to remind you: We made a scatterplot in problem set 1. We created scatterplot in the "Initial_Data_Exploration.rmd" file. Scatterplots are often the 'first step' for exploring data sets that involve two numeric variables. They can help us see if there are any possible relationships present in the dataset that we can then quantiy more formally. The simple plot() function contains a number of arguments that allows you tweak the output. You can go to the Help menu and type in plot() to see some of the arguments or even google something like "plot() arguments in R" to see what you can do. The Help menu helpfully gives us the following: 
+
+plot(x,y,...)
+
+Those "..." mean that there are a number of non-required arguments that can be modified
+to make your scatterplot look like you want it to. We'll see these arguments in the next chunk. 
+
+We'll begin by manipulating the BP data set from Module 1. In the R chunk below, you will see that we take the two columns of the BP dataset (it helps to visualize datasets, like BP.csv, as Excel spreadsheets and to think of graphing two columns), SBP (Systolic Blood Pressure) and DBP (Diastolic Blood Pressure) as the "x" and the "y" argument of the plot function. 
+
+We will plot SBP on the x-axis and DBP on the y-axis.Those are the only required parts of using the plot function. We can also add a title to our graph (which we should always do). We can use the following argument to do add a title: main="Insert Your Title Here". We can also add a subtitle: sub="Insert Your Subtitle Here". You should also label your x-axis and y-axis by using the xlab and ylab arguments. You can specify a different colour for your scatterplot by using the argument col="whatever colour name you want". For a list of colors, go here: http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf Finally, you can change the default circle of a scatterplot by using the argument pch (you can find the options for pch here: http://www.endmemo.com/program/R/pchsymbols.php)
+```{r}
+# example of splittin up the plot function so that it doesn't run off the page
+# on the rendered document!
+plot(SBP,DBP,main="BP data",
+     sub="Investigating any relationship between \n numerical variables, SBP and DBP",
+     xlab="SBP",ylab="DBP",col="Blue",pch=3)
+```
+#### Histograms
+What if we have frequency data? That is when we would want to use a histogram. Histograms give us information about the general 'shape' of our data, ie. is it approximately normally distributed? Does it contain any potential outliers? We will use the Blowflies.csv dataset and draw a histogram of the number of emerging blowflies on subsequent days. We use the function "hist" to produce this type of plot but many of the same arguments are found within the function as were used in our scatterplot function above. 
+```{r}
+hist(number_emerging,col="Red",main="Histogram of blowfly emergence",xlab="num emerging")
+# you can get some of the same information as a histogram from a stem-leaf plot, too.
+stem(number_emerging)
+```
+In module 4, we will see boxplots and we will also see mosaicplots in a later module. 
+
+```{r}
+detach(BP)
+detach(Blowflies)
+```

@@ -1,0 +1,216 @@
+---
+title: "RBook_ggplot2"
+author: "Danielle A Presgraves"
+date: "11/7/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+## Preamble
+In the last module, we saw some simple graphing functions that are included in the standard "base model" R that you downloaded. Now, we are going to download the **ggplot2** package to learn about extending our basic R functionality. 
+
+What is a package? Why do we care? When we download R/RStudio, we are downloading a version that includes functions and features that were determined, by the developer, to be widely used and necessary for most end-users. However, not all functions used by every individual could be included in the base version of R/RStudio because including every niche equation and function would impossibly memory-intensive. This means that, as biologists', there are many functions that we might want to use that we will need to download individually in packages. A list of some useful packages for biogists' (or at least a good start) is found in Chapter 2 of your Rbook. 
+
+ggplot2 is a package developed by the R guru Hadley Wickham (his personal website is here:http://hadley.nz; a website that shows you how to obtain ggplot2 is here: https://ggplot2.tidyverse.org; finally, a website that contains basic documentation for ggplot2 is here: https://www.rdocumentation.org/packages/ggplot2/versions/3.3.0), that should be easier to use on complex data than the base packages of R. He has written widely about the "tidyverse", an attempt to define universal rules for wrangling data in a consistent way so that it is easily accessible for manipulation by data scientists. This sounds like a trivial concept but 'data grooming' due to poor data management practices can constitute a large chunk of a Data Scientists time and it is often really boring work. Hadley Wickham has also tackled the problem of making data visualization straightforward by creating universal rules (the so-called "Grammer of Data Visualization") with ggplot2 being the result of those efforts. 
+
+##Activities:
+### Installing a package:
+The first package that we will download is ggplot2.
+
+Let's go through an installation of ggplot2. We click on the "Packages" tab (lower right quadrant) and use the install button. A menu will pop up and you will want to type in ggplot2. We will then need to click on the box of ggplot2 that is given in the "Packages" tab when we want to ensure that it is open and available (when we open RStudio again after ending a previous session). You will see that there may be a number of packages in your package list but you need to click on boxes (this should result in a black check mark) to ensure that they have been loaded into the working memory for this particular session!
+  
+A second way to install a package, is to use the following command(I have hashed it out since I already have ggplot2 in my library. Remember that you can also use the install icon under the Packages tab): 
+```{r}
+#install.packages("ggplot2")
+```
+
+You will probably get asked to choose a CRAN mirror - this doesn't matter that much. 
+then you will need to load the package by either checking it off in the packages panel or typing library("ggplot2") at the command prompt in the console. 
+
+The next 'R chunk" shows use how to manipulate a dataset, mpg, that is built into ggplot2 (but not base R) and also shows us how to load the ggplot2 package. 
+
+```{r}
+# *************
+# The document with run perfectly fine without this as an .rmd file but in order to knit
+# the document together you need to include the command library(ggplot2) or, among other 
+# issues, it won't recognize the diamonds and mpg datasets
+#*********
+library(ggplot2)
+# head command gives the first 6 rows of the dataframe which is helpful to check the data
+# set if it is very large
+head(mpg)
+# tail command gives the last 6 rows of the dataframe
+tail(mpg)
+```
+Remember that we can use head/tail command to see the first six or last six rows of the data set to see what the columns are etc. You can now use the ggplot function. 
+### Fundamentals of ggplot2
+
+Remember when we quickly visited the generic plot function that is present in base R in Chapter 2 of the R book? ggplot() is the equivalent generic plot function that is part of the ggplot2 package. You always start a plot by using the ggplot function since that creates a coordinate system and then you add subsequent 'layers'. 
+
+ggplot uses geometrical objects, called *geoms*, to visually represent the dataset. Bar charts use *geom_bar*, histograms use *geom_histogram*, boxplots use *geom_boxplot* and scatterplots use *geom_point*. All of these geoms have a wide range of arguments that can be used with them. There is a cheat sheet here: https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+
+```{r}
+# reminder: we split up the geoms in the following way so that the lines in this 
+# coding chunk don't 'run off' the page when we render the document
+ggplot(data = mpg,mapping = aes(x = class,y=hwy,color=class)) +
+  geom_boxplot() + ggtitle("Highway miles and class of car")
+```
+
+
+In the chunk below, we call the ggplot function on the built in dataset (called mpg) and then we *layer* on the actual points that we are trying to graph. 
+
+In fact, we could start off by running just the ggplot function on our dataset: 
+```{r}
+ggplot(data=mpg)
+```
+
+What does this give us? It *should* give us an empty plot (and an error message) since we haven't actually specified any points to graph. *geom_point* adds points, in a layer, to our axes. Every one of the *geom_something* functions takes a mapping argument which governs the visual features (the *aesthetics* thus 'aes') of each particular layer in your graph including features such as size, shape and colour of your points. 
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ,y = hwy))
+```
+
+The produced plot shows a potentially negative relationship between engine size (displ) and fuel efficiency. 
+
+There is a common format that you will use for ggplot: 
+#ggplot(data=data.frame path)+geom_function(mapping=aes(MAPPINGS))
+
+We can specify the colour of each class of car, for instance. We first want to ensure that we are specifying the correct variable - so be sure to look at the column names and the first six rows to get a sense of the categories available. We show two plots on the same data below (one of them uses *geom_point* and the other *geom_smooth*) 
+```{r}
+head(mpg)
+ggplot(data = mpg,mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(x = displ,y = hwy,color = class))+geom_smooth()
+
+ggplot(data = mpg) + geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+Voila! This produces a legend and everything in a very intuitive way! (This is why people get so excited about ggplot2 - there is still a tiny bit of a learning curve but graphic manipulations are even easier than in basic R). 
+
+ggplot uniquely maps a defined aesthetic criteria to a variable using unique values of the variable (sometimes called 'factors'). This is called 'scaling' and includes having R automatically add a lovely legend explaining the correspondance. You can also use size, shape and alpha (transparency of points) - and any combination of these features- but you will need to set these up outside of the aes bracket, like so (note that I have put these commands outside of a normal R chunk but still used R chunk font by using three ` without the {r}. You can copy and paste the commands that you find useful: 
+
+```
+color in a string: 
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ,y = hwy),color = "purple")
+or size in mm: 
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ,y = hwy),size=1.1)
+or shape (you can google shapes in ggplot2 for a table of numbers and their corresponding shapes; what does number 11 give you?):
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ,y = hwy),shape=11)
+Also, remember when I used the elseif statement to specify SBP above 120 in the previous lecture? You can do that with ggplot in a much more straightforward way: 
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ,y = hwy,color=displ>5)
+```
+There is also (of course!) a way to display multiple graphs in the same place, which is particularly useful to do for categorical variables. You need to split your data into subplots using something that ggplot calls a 'facet'. For a discrete categorical variable, you can use *'facet_wrap'* and for a combination of two variables, you can use *'facet_grid'*.
+```{r}
+# here are two ways of splitting up the facets:
+# 1. using the class of the car, ie. 2seater, compact etc to organize your data into two rows
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~class, nrow = 2)
+#2. using the cylinders for columns and the rows are dictate by drv, ie. 4 wheel drive or front #wheel drive
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+```
+
+You can layer multiple geoms on each other, too. In the example below, we have a scatterplot with a loess smoothing for line of best fit through those points. 
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x = displ, y = hwy)) +
+  geom_smooth(mapping = aes(x = displ, y = hwy))
+```
+
+Advanced: you can put the universal aesthetic features into the ggplot function and it will apply them to all the layers. You can separately place the aesthetic features that you want associated with ONLY one particular layer in the geom of THAT layer. 
+```{r}
+# here is the example with all aesthetics governed by first function. 
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + geom_point() + geom_smooth()
+# here is an example where in the layer that places the points on the graph, the aesthetics have
+# changed to display a different colour for each specific category of vehicle class. 
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(mapping = aes(color = class)) + geom_smooth()
+
+```
+
+Onwards to explore some bar chart awesomeness. Load diamonds built in dataset and then use a bar graph (using a geom, of course): 
+```{r}
+tail(diamonds)
+# before we attempt to add error bars, we should explore the data summary
+summary(diamonds)
+
+```
+As is the case with scatterplots, you can specify colors with the aesthetic feature. You can also choose to display as a stacked bar plot (by 'filling' with yet another variable from the dataset) or side by side bar plot: 
+```{r}
+ggplot(data = diamonds) + geom_bar(mapping = aes(x = cut, fill = cut))
+ggplot(data = diamonds) + geom_bar(mapping = aes(x = cut, fill = clarity))
+ggplot(data = diamonds) + geom_bar(mapping = aes(x = cut, fill = clarity),
+                                   position = "fill")
+ggplot(data = diamonds) + geom_bar(mapping = aes(x = cut, fill = clarity),
+                                   position = "dodge")
+```
+Does price increase with carat? We will determine the mean of each of the each carat. We'll use an important built-in function called "tapply" here. We will discuss tapply (which is part of a larger 'apply' family) in a later module. You can probably guess what it is doing here, though (or you could google it or look it up in the help search bar): You give the tapply function a column of data and then a subset of the that data and it applies the provided function (mean, sd etc) to the subset of data.   
+```{r}
+mean_price_by_carat<-tapply(diamonds$price,diamonds$carat,mean)
+mean_price_by_carat
+#-------------------
+plot(mean_price_by_carat)
+# ------------------
+mean_price_by_cut<-tapply(diamonds$price,diamonds$cut,mean)
+mean_price_by_cut
+# ------------------
+plot(mean_price_by_cut)
+# ------------------
+SD_price_by_cut<-tapply(diamonds$price,diamonds$cut,sd)
+SD_price_by_cut
+# ------------------
+mean_price_by_cut
+n_diamonds<-length(diamonds)
+n_diamonds
+```
+
+
+### ***********************
+What about our data sets BP and Blowflies which we used in Chapter_2.rmd to investigate the capabilities of R? Can we recreate or even improve on those basic graphs by using ggplot2 on those data sets?
+```{r}
+BP<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/BP.csv")
+Blowflies<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/BLOWFLIES.csv")
+attach(BP)
+attach(Blowflies)
+ggplot(data = BP,mapping = aes(x = Age ,y=SBP)) +
+  geom_point(shape=5,size=2,color="Purple")
+```
+And now for the blowflies data set: 
+```{r}
+ggplot(data = Blowflies) + geom_histogram(aes(number_emerging))
+```
+detach your csv files:
+```{r}
+detach(BP)
+detach(Blowflies)
+```
+
+You can, of course, also use directly inputted numbers (in a vector) with the ggplot2 library. You will need to ensure that your data is a data frame, though, since that is what ggplot works with exclusively: 
+```{r}
+example_squares<-c(1,4,9,16,25)
+class(example_squares)
+# we are forcing the data - which was inputted using c() and therefore is a vector - to be # a data frame because ggplot2 requires that the data be in that format
+example_squares2<-as.data.frame(example_squares)
+# double check that the class is now a dataframe
+class(example_squares2)
+```
+Now that the data is in the correct format (and data type), we can use ggplot2: 
+```{r}
+ggplot(data = example_squares2) + 
+  geom_histogram(aes(example_squares2$example_squares))
+```
+How about creating a dataframe that has two columns instead of just one? We can use the cbind() function to bind two vectors together where the two vectors are treated as columns. There is also the rbind() function which does a similar thing but with rows. Strange, eh?
+```{r}
+just_count<-c(1,2,3,4,5)
+newex<-cbind(example_squares,just_count)
+class(newex)
+# force newex into a new object called newex2 which is forced to be a dataframe
+newex2<-as.data.frame(newex)
+newex2
+# compare the classes - the data types - of the two objects. 
+class(newex)
+class(newex2)
+attach(newex2)
+# with this type of simplified manufactored data we don't expect any deep insights and we 
+# don't get any with the resulting graph.
+ggplot(data = newex2) + geom_histogram(aes(example_squares))
+detach(newex2)
+```

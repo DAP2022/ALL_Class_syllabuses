@@ -1,0 +1,293 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+title: "Chapter_10_Regression_Correlation"
+author: "Danielle A Presgraves"
+date: "9/17/2019"
+output:
+  pdf_document: default
+  word_document: default
+--
+# Pre-amble: 
+An important announcement: 
+https://xkcd.com/2048/
+
+### Introduction
+In this module we will look at two more powerful analyses that build on the tools used in ANOVA: 
+
+1. simple linear correlation 
+
+2. simple linear regression 
+
+Both of these are parametric tests and have some fairly rigorous assumptions that must be met. If we can meet these assumptions, correlation and regression can provide us with detailed information about the relationship between two variables. 
+
+Of the two tests, regression is used to describe a much more powerful relationship, one in which changes in an independent variable (X) cause predictable and measurable changes in a dependent variable (Y). ** Regression allows us to predict Y if we know X.** On the other hand, correlation is a way to describe two variables that are associated with each other, that vary together. Neither correlation nor regression imply causation. Warning: carrying out a regression analysis and finding a significant relationship does not necessarily mean that you have found ** a cause and effect relationship**. Demonstrating a cause and effect relationship also requires proper experimental design, with appropriate controls to rule out other possibilities.
+
+### Correlation: 
+
+We will illustrate the steps of using the program to do regression and linear correlation with the same data set: predicting the age of a lion from the amount
+of black on its nose pad. In the data file (Nose_age.csv), the age of lion is called age, given in years, and the proportion of black on its nose pad is called proportion.black. 
+```{r}
+# I have renamed this file to be Nose_age and it is available in the data sets on Blackboard
+age_lion<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/age_lion.csv")
+attach(age_lion)
+names(age_lion)
+```
+Make a scatter plot of the relationship between age and proportion.black. Remember that age is one variable (V1) and proportion.black (V2) is the second variable in the functions given below. In the plot commands below, we use pch =8. Try out different numbers to see what the dots change to (you can google the table of pch numbers and their output).
+```{r}
+plot(age,proportion.black, main="Age and proportion of nose
+     that is still black ",pch=8)
+```
+To calculate the regression line (you may have heard expressions that are somewhat interchangeable with what we will call the regression line: line of best fit or ordinary least squares regression line) and test the null hypothesis that the slope is zero, we follow a similar procedure to what we did when we used ANOVA: we need to check that all of the assumptions of the Pearson correlation test are fulfilled and then conduct the actual test. 
+
+#### 1. Check assumptions:
+
+##### (a) Bivariate normality of the two variables
+The joint XY population distribution is bivariate normal. This situation only occurs when both individual populations (X and Y) are each normally distributed. We can use the graphical methods that we have already seen in previous chapters such as boxplots or hist to visualize any serious violations of bivariate normality (ie. if the distributions are highly skewed or have outliers present). Of course, remember that you can modify the boxplots to be whatever color you wish (it doesn't have to be "Blue" as it is in the example below). In some cases, a continuous variable (such as the ones in the above lion age/nose colouration example), for instance, a simple scatterplot will work better. For example, a boxplot doesn't produce anything useful in this case (because the age variable is continuous)!
+```{r}
+# boxplot won't show up anything useful since age is continuous. However,
+# if given categorical variable, obviously it would work the best!
+# boxplot(proportion.black~age,col="Blue")
+# let's look at the histograms of the two variables to see if they
+# are both normally-ish distributed: 
+hist(proportion.black, col="Green", main="Is the Proportion of nose \n that is black normally distributed? ")
+hist(age, col="Orange", main="Is the age of the lions \n normally distributed? ")
+# age looks closer to normal than proportion.black but we'll have
+# to continue on to see...
+```
+Nothing informative will be produced (you might be able to see that the distributions of age and proportion.black are seem to have different histograms but it isn't clear if that is significant or not).
+
+To remind you of previous tools: You can also use qqplots to plot the quantiles of two variables against each other. In order to ensure that each variable is normally distributed, you can plot each of them against a randomly generated normal distribution like so:
+```{r}
+# plot age against 32 points pulled from a normal distributed data set:  
+qqplot(age,rnorm(32,mean(age),sd(age)), col="Orange",pch=14, main="Is age normally distributed?")
+qqline(age, col="green")
+# plot proportion.black against 32 points pulled from a normal distributed data set: 
+qqplot(proportion.black,rnorm(32,mean(proportion.black),
+                              sd(proportion.black)),col="Green",pch=6, main="Is proportion of black on nose normally distributed?")
+qqline(proportion.black, col="orange")
+```
+Or, better yet, we can compare the variable directly to see if we get a straight line scatterplot. It is even better to plot the two variables against each other since, for correlation we don't just care if they are individually normally distributed, we care that they are bivariately distributed: 
+```{r}
+# Do these produce the straight lines that we expect from a qqplot 
+# when two normal distributions are compared? Probably not...
+qqplot(age,proportion.black,main="Do these two variables have the same distribution?")
+# you put the y variable as the argument for qqpline:
+# Note: you wouldn't normally do this, but I did it to remind you that the two variables aren't normally
+# distributed, even though they produce a straight-ish line. 
+# Note: Besides MVN, there are other methods to determine bivariate normality but many of them involve sorting # your data and plotting it using 
+# a chi squared Q-Q plot. More information about that strategy is here: # https://core.ac.uk/download/pdf/234680353.pdf
+# but that also requires the downloading of different libraries. 
+qqline(proportion.black, col="orange")
+# you could also see what a line of best fit looks like between the two variables.
+#abline(lm(proportion.black~age))
+```
+And...of course, there is always the qqnorm function. Let's try it on age (or proportion.black):
+```{r}
+qqnorm(age)
+qqline(age,col="Dark Red")
+```
+
+For a more quantitative/formal test, consider also using the shapiro.test(V1) on each of the two variables. If the resulting pvalue is smaller than your specified $\alpha$, you can reject the null hypothesis that your data set is normally distributed. There are other tests such as Roylston's multivariate normality test which are similar to Shapiro wilks but test more than one variable simultaneously. You will usually have to download a package (such as MVN) to use those. I show it in the cell below after the shapiro.test.  
+```{r}
+shapiro.test(age)
+shapiro.test(proportion.black)
+# Neither age nor proportion.black are normally distributed - we can
+# reject the null hypothesis of normal distribution. 
+
+```
+# -------------------------------------------------------------------------------
+# load the library MVN after downloading it using the package tabe and installing it. 
+#-------
+If for whatever reason you are unable to download the MVN library, don't fret! When I recently tried to update the MVN library, I discovered that I had to update and download MANY other libraries and packages which are 'dependencies' of this package update. It is a useful package if you are considering doing any analysis where you need to show, for instance, bivariate normality but it might not be worth the hassle of spending a lot of time downloading it for just that function. I will leave it up to you whether or not you download it. 
+```{r}
+library(MVN)
+# for informatin on the specific mvn function, please see the help documentation here:
+# https://cran.r-project.org/web/packages/MVN/MVN.pdf
+# this mvn function includes shapiro.wilk tests inside of it, as well as other 
+# tests including skewedness and summaries of each variable. 
+# Notice that we give it the entire data set age_lion instead of individual 
+# columns to graph
+
+#Now we can show fancy contour plots: 
+
+mvn(age_lion,multivariatePlot = "contour")
+# the contour plot is pretty cool and it doesn't show up bivariate normality.
+# Google contour plots of normally distributed variables if you are confused by
+# this. Basically, they should like concentric rings of ovals. 
+```
+
+##### (b) Linearity of data points can also be demonstrated via a simple scatterplot:
+```{r}
+plot(age,proportion.black, pch=4,col="Red", main=" Is age and proportion of \n black on nose linearly related?")
+```
+If the assumptions are met (or approximately met) then we can move on to actually testing the null hypothesis: $H_0: \rho=0$ (the population correlation coeficient is equal to 0; there is no linear relationship between the two variables)
+
+#### 2. The actual correlation test
+If Parametric assumptions met (use Pearson's correlation). Pearson's correlation is the default of the cor.test() function. 
+```{r}
+age_lion.cor<-cor.test(~age+proportion.black)
+age_lion.cor
+```
+The lion dataset will *not meet the assumptions* but you may wish to conduct a correlation test anyway for practice. If Parametric assumptions are not met and could not be met by transformation (that's right! More transformation!) then one of the non-parametric versions of correlation need to be used instead. Luckily, R differentiates between these methods simply by their names (you specify the appropriate non-parameter test name as an argument, the default is Pearson):
+
+##### (a) If Sample size: 7 <n <30 (Spearman rank method)
+```{r}
+# you need to specify that that the method is 'spearman'
+cor.test(~age+proportion.black, method = "spearman")
+```
+
+##### (b) If Sample size: n >30 (Kendall method)
+```{r}
+# you need to specify that the method is kendall
+cor.test(~age+proportion.black, method = "kendall")
+```
+The Lion dataset has 32 datapoints so you should use Kendall. There are some values which are tied which will throw a warning but the results are still valid. You can notice that the correlation value that is calculated is different between the three methods (you might think about why that is...) but, in this case, the most appropriate method is Kendall. 
+
+#### 3. Conclusion
+You might want to superimpose the "best fit" line onto your scatter correlation plot. In order to do that, you need to first fit a "general linear model". You will use the same methodology as outlined in the linear regression section (next up) to do this. Once you have the general linear model, use the abline() command - with the linear model as the argument- to superimpose the line of best fit onto your graph
+
+### Regression: 
+The difference between correlation and regression is that in regression either one of the variables has been set (not measured) or there is an implied causality between variables (one variable could influence the other but the reverse is unlikely). 
+
+In regression analysis there are two variables: one is the Independent variable (IV) and the other is the dependent variable (DV) whose value is hypothesized to be predicted by the independent variable.
+
+With regression $H_0:\beta$ = 0 (this means that we are testing that the true population slope is equal to zero). The first two steps in establishing assumptions are the same as linear correlation; the third step, homogeneity of variance, is new.
+
+1. Linearity
+
+2. Normality of response variable
+
+We already looked at this when we were analyzing the data with correlation but I wanted to introduce a slightly different member of the *apply* family of functions. In the previous module (9), we used *tapply* on the ANOVA data. tapply was appropriate in that case because the data was grouped (high, medium and low maize yield). In our case, the age is continuous, not grouped, so we need to use another member of the apply family. In fact, we use apply(). Since the apply family is a massively important family of functions (if you have experience with other programming languages, it is equivalent to *map()* functions so it can take the place of a programming loop), we will explore them in a tiny bit more depth in module 12 when we discuss basic programming features of R. 
+```{r}
+# you can do this for both columns simultaneously by using 'apply' instead of 'tapply' since we don't have 'groups' like we did with ANOVA in module 9. We use it like so: 
+apply(age_lion,2,shapiro.test)
+```
+
+3. Homoscedasticity (of variance): 
+
+This term translates into variance that is equally scattered at any given value of the independent variable. You can visualize this via a residual plot, once you have fitted a general linear model to your data, where the residuals versus X (Independent Variable) should be a  line. 
+
+```{r}
+# the linear model uses the function: lm(). As usual, we park the results 
+# of this function into a meaningfully named variable
+age_lion.lm <-lm(proportion.black~age)
+# let's look at the residuals using the resid function that we can use on the results of the linear function: 
+age_lion.resid<-resid(age_lion.lm)
+# you can plot the residuals in the order in which the individuals are presented
+# in the csv file like so:
+plot(age_lion.resid)
+# you can do fancy stuff like superimpose the names of variable onto the points # although it doesn't make much sense to do that with numerical data but you can see it here for completeness: there will be a 5.4 and 5.8 etc. This would be 
+# interesting to do on categories of,say, animals etc.
+
+#note: the cex argument just controls how big the labels are. The default is 1. You can
+# play around with different cex sizes here, like cex=0.8 or cex=0.1
+# the pos argument locates the label. Try out different values of pos to see what happens.
+# you can also play around with rotating the labels with additional arguments like srt 
+# you can compare the two lines by hashing out one and running it and then hashing out the other
+#############################################
+#text(age_lion.resid, labels=age, cex=0.4, pos=1)
+text(age_lion.resid, labels=age, srt=45,cex=0.4, pos=1)
+# we expect no slope with residuals so it is visually useful to plot a plain,
+# straight line
+abline(0,0)
+# note that you can also plot the residuals by age, for instance by:
+plot(age,age_lion.resid)
+# you can't then use the text() to label the plots, though (although
+# you could sort them and then label them, I suppose)
+# you can also use good old histogram of the residuals to see thta they are normally distributed. 
+hist(age_lion.resid)
+```
+If there is no obvious wedge or funnel pattern apparent in the residual plot (confirming that the assumption of homscedasticity of variance is likely met) than we can move on. Remember that the **residual plot = observed-predicted** where the predicted value is predicted by the line of best fit produced by regression (by the linear model). This means that there should be a reasonable and equal scatter above and below the "0" line. This seems okay (the assumption appears to be met). We can also look at the response value (proportion.black) for each level of the predictor variable (Age), to see if 
+
+### Let's now look at the single response value for each level of the predictor variable (AKA: what does running regression - a linear model - give us for estimates of intercept and slope?) 
+
+To refresh your memory about linear regression: 
+$Y = A + \beta*X$
+
+The linear model gives us the A (y-intercept) as well as the slope.
+
+```{r}
+# repeat what we did in the cell above but we will look at the actual 
+# linear model and what it contains instead of only graphing it as we did 
+# in the above cell. 
+age_lion.lm<-lm(proportion.black~age)
+# let's see the estimate intercept and age 
+cat("Here is the linear model: \n")
+age_lion.lm
+#plot out all the information hiding in the lm object. 
+# There is some useful information to us - that we have seen in 
+# qqlots and residual plots - and some that is more advanced than this course...
+plot(age_lion.lm)
+# what is the summary statistics of the linear model? 
+cat("Here is the summary of the linear model:\n")
+summary(age_lion.lm)
+# What is the ANOVA statistics - producing an ANOVA table - of the linear model? 
+cat("Here is the ANOVA table of the linear model:\n")
+anova(age_lion.lm)
+```
+The >summary() gives you the intercept and slope of your linear model line among many other useful numbers such as $R^2$ and the anova() takes your lm objects and spits out an anova table. 
+
+#### Compute confidence interval:
+In order to calculate the 95% confidence intervals of the intercept of the regression equation and of the independent variable you use the >confint() function. 
+```{r}
+# this function allows you to state the level of confidence 
+# that you want. 99? 95? 90?
+confint(age_lion.lm, level = 0.99)
+```
+
+The relationship of the independent variable and the dependent variable is nicely summarized by graphing the original scatterplot along with a superimposed >abline() of the regression line and confidence bands:
+```{r}
+plot(proportion.black~age,pch=16,xlab="Age",
+     ylab="Proportion Black",main="Confidence Bands")
+#use the abline function to plot the line of best fit by using
+# the results of the linear model as the argument
+abline(age_lion.lm,col="red")
+```
+Producing confidence bands can be a little tricky. In an effort to keep this recitation to a reasonable length, I will skip over some of the underlying complications and just give basic instructions (if you are interested in understanding how, exactly, some of these commands work, I will refer you to google! Or the library to track down a more advanced R book! Or enroll in STT 278 which is taught each spring). I suspect (but haven't used it myself yet) that the procedure for producing confidence bands is much easier in ggplot2 since there is a dedicated geom called "geom_ribbon" that apparently does the same thing.
+
+First we need the fitted values and their standard errors for all the observations. We use the >predict() function to obtain these and we will save them by placing them ever so carefully into an object. We can call this object whatever we wish but using a clear name makes it easier to keep track of all the pieces. Let's name it "CI":
+```{r}
+#predict is a method that belongs to lm objects, we want it to return standard errors 
+CI<-predict(age_lion.lm, se.fit = TRUE)
+CI
+```
+We also need the Working-Hotelling multiplier (these bands are sometimes called the Working-Hotelling (1-$\alpha$)100 Confidence bands). For a 95% confidence band, we use the following, along with n-2=30 (there are 32 data points in the lion data set):
+```{r}
+W<-sqrt(2*qf(0.95, 2, 30))
+W
+```
+
+There are just a few more steps. We need to have R calculate the upper and the lower bounds of the confidence band for each observation and we will save these calculations in another object (we column bind them with the cband function). Let's call this one "Band":
+```{r}
+Band<-cbind(CI$fit-W*CI$se.fit, CI$fit+W*CI$se.fit)
+plot(Band)
+```
+
+To superimpose these lines on your scatterplot, do the following: If your estimated regression line has a positive slope, use the following commands, with the variable names modified as needed:
+```{r}
+# I'm not sure why but you seem to need to call the plot in the
+# same chunk as the points command
+plot(proportion.black~age,pch=16,xlab="Age",
+     ylab="Proportion Black",main="Confidence Bands")
+abline(age_lion.lm,col="red")
+#type is line and it is dashed so it is equal to 2. You
+# can google what 0,1,2,3,4 etc mean wrt lines. 
+points(sort(age),sort(Band[,1]),type="l",lty=2)
+points(sort(age),sort(Band[,2]),type="l",lty=2)
+
+```
+You get the confidence band enclosing the estimated regression line, as shown on the next page. You can save this plot, just as previously done with the original scatterplot. If your estimated regression line has a negative slope, you need to sort the columns of Band in reverse order. So change the above R commands to (I have hashed these commands out because our data has a positive slope so you wouldn't use them for the Lion dataset):
+```{r}
+#points(sort(age), sort(Band[,1], decreasing=TRUE), type="l", lty=2)
+#points(sort(age), sort(Band[,2], decreasing=TRUE), type="l", lty=2)
+```
+ Always remember to detach (I sometimes forget :( )
+ 
+```{r}
+ detach(age_lion)
+```
+
+  

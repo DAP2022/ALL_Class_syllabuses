@@ -1,0 +1,402 @@
+---
+title: "Chapter_11_GLM"
+author: "Danielle A Presgraves"
+date: "10/03/2018"
+output: pdf_document
+---
+#### Pre-amble to the pre-amble: 
+-------------------
+This module is very long. The problem set includes problems on Blocking, ANCOVA and PCA. You should be able to solve them by following the examples given below. I have also included a section on multivariate analysis for completeness, just in case you want to read through it; it won't be on the problem set. For each category, I have included one example and link to at least one other example that is online. I know that not everyone has the same background in statistical analysis and so I am trying to make sure that, for those who want it or need it for deeper understanding, you have access to a few more supplemental resources. This has made the module even longer than the other ones and you may find that you don't need the extra resources. In my opinion, you should begin this problem set early, though, just to make sure!  
+
+#### Pre-amble:
+-------------------
+Occassionally we want to analyze data **beyond** just one-way ANOVA or correlation/regression. We can use general linear models to appropriately partition out the variance due to ''signal''  and to the variance due to ''noise''. We have seen the basics of **particular** general linear models (GLM) such as ANOVA and correlation/regression in the previous couple of chapters but we will investigate three small extensions of models that are commonly encountered in biology. This is just a small subset of general linears models, there are so many other kinds to learn how to manipulate! For instance, we won't cover ideas like nested design and other important models. My goal with this rather full module is simple, although some of the ideas are a bit challenging: I want to ensure that you have some basic tools and experience with GLM so that you can feel confident tracking down and applying solutions to any possible GLM problem that you encounter that aren't covered in this one credit course! 
+
+In this module, we will work through examples that include blocking, covariates and we will also see an example of multivariate anova (I have included multivariate ANOVA but you aren't responsible for it on your problem set). We will then work through two different examples in PCA (Principle Component Analysis). PCA - and really any 'dimension reduction' method - is EVERYWHERE currently probably due to its crude centrality in "Big Data" analysis. 
+
+#### 1. blocking example: 
+
+Using the pastry/ice cream example stolen from here (which doesn't open anymore, summer 2020, but I am including it in case I can find a new site for the information): https://www.stat.wisc.edu/courses/st850-lindstro/handouts/blocking.pdf
+Here is another brief example that analyzes block design in a more sophisticated manner: https://stat.ethz.ch/~meier/teaching/anova/block-designs.html
+and anothere here: http://www.personal.psu.edu/mar36/stat_461/RCBD/rcbd.html
+
+Wikipedia on Blocking: https://en.wikipedia.org/wiki/Blocking_(statistics)
+
+Example: Assume we have 3 different recipes for making ice cream/pastries. There is only time to make 3 batches a day and we want to find the one that produces the most delicious pastry. Since pastry is a fussy dessert that will be impacted by the amount of humidity in the air (ie. weather on a particular day) or how tired the pastry chef is (ie. the order that the recipe is made - is it the first one made in the day or the last one at the end of the end?), we need to try to account for that 'noise' since it could influence how we rate the pastry deliciousness.  We might assign recipes to days as follow:
+
+          |day1 day2  day3  day4  day5
+-----------------------------------------
+recipe #  |1      3     1     2    1    
+          |3      1     2     3    2
+          |2      2     3     1    3
+----------------------------------------
+           
+Note that each day contains all three recipes. This arrangement is called complete blocks. The order of the recipes is randomized so we can call this a randomized complete block experiment. This is the ideal manner to conduct blocking.
+
+In this experiment, the day is a blocking variable. Why is that? **Because it is not a variable of interest**. We must take into account the variability due to day because of differences in humidity and temperature that could effect our ice cream output but the particular day (day1, day2,...) is not our primary interest. 
+
+```{r}
+#Let's start! First, read in data as a vector
+resp<-c(2.754893,6.212726,2.083380,5.052990,2.592850,2.043171,2.400241,3.616937,5.821456,5.428393,6.496587,3.435825,3.101391,4.141396,6.766317)
+#read in each block - since there are three recipes baked each day,
+# there are three repeated blocks of each type: B1, B2, B3, B4, B5 which #correspond to each of the five days. 
+block<-c("B1","B1","B1","B2","B2","B2","B3","B3","B3","B4","B4","B4","B5","B5","B5")
+# within each particular day, there are three recipes baked. 
+recipe<-c("R1","R3","R2","R3","R1","R2","R1","R2","R3","R2","R3","R1","R1","R2","R3")
+
+#create a dataframe by binding these columns together. Cbind() is so useful!
+pastry<-cbind(resp,block,recipe)
+pastry
+```
+
+We can include analysis with a block with the following formula (as usual there are other ways of doing this in R but this, I think, is the most straight forward way so I'll adopt it to keep my syntax as consistent as possible. You might find a different syntax which is totally okay as long as it is used correctly): 
+
+```{r, echo=FALSE}
+#creating a linear model, lm.pastry, to park the results of the linear module (lm)
+lm.pastry<-lm(resp ~ block + recipe)
+cat("Let's see the anova summary of this linear model:\n")
+anova(lm.pastry)
+```
+I appreciate that blocking can be a bit confusing - but it *is* important - so let's compare the full model (the blocking factor 'block' included in the analysis) to the model without the blocking factor included since the blocking factor was deemed not significant by the ANOVA (the P-value was >0.05). Warning: If you have designed an experiment to include blocks, you should always include them in your analysis even if they are not statistically significant (P-value >0.05). I am disregarding this rule for the purpose of illustrating how blocking works! 
+
+Here is the F value of the recipes (treatments) without including the blocks. 
+```{r}
+#no blocks included. Normally you shouldn't do this! Just done as an illustration of the importance of blocks in your design! 
+lm.pastry_no_blocks<-lm(resp~recipe)
+cat("ANOVA format, please: \n")
+anova(lm.pastry_no_blocks)
+```
+You can see that removing the blocks from analysis still leaves us with a significant difference between recipes but the F-value of the recipes accounts for less variation that when the blocks were included (more of the variance ends up in the residuals/noise bin). 
+
+When to include blocks versus when to not include blocks is a bit nuanced since, as with most techniques in statistics, there are trade-offs (namely: you really don't want to overfit of your model for a variety or reasons but often because you lose predictive power by overfitting) but, to simplify this approach greatly, even when the block is not statistically significant if it was part of your experimental design for the particular experiment, it is usually a good idea to still include it - although it doesn't seem to matter much in the above case since you are still getting a significant result for the recipe (treatment). If you were testing different ice cream pastry recipes in the future, you might assume that the particular days may not need to be included as blocks as you designed your experiment, though (and could therefore drop it from the analysis). 
+
+#### 2. Including a covariate (analysing the contribution of a factor to explaining variation while adjusting for a pesky covariate): 
+We will work through one example but, in case you want a second example, the following link is a short one that uses a built-in data set in R. This example uses the same overall strategy as my example below of two rounds of fitting the model (this is the conventional methodology for ANCOVA) but it isn't as explicit about the fact that they are doing that so keep it in mind. 
+https://www.tutorialspoint.com/r/r_analysis_of_covariance.htm
+
+Tangential but fascinating aside for evolutionary biologists in this course: We are going to work through an example of naked mole rats below.The existence of a eusocial mammal was first hypothesized by Richard D Alexander in the early 70's when he speculated about which certain conditions would have to be fulfilled for such a creature to exist. It turns out that two eusocial mammals actually do exist - and were found to fulfill Alexander's criteria in the mid-70s! - the naked mole rat, important at the UR (Gorbanova and Seluanov labs), and the Damaraland mole rat. So Alexander was correct with his predictions. Cool, right?
+
+Onwards to the actual example: 
+
+Recognizing what a covariate is can be a bit of a struggle to new statistics students so here is a widely used covariate in clinical data analysis: Socio-economic status.
+When we are analyzing large data sets to identify factors that, say, allow individuals to live longer and healthier lives, we often have to account for the fact that wealthier individuals often live longer than poor individuals. Usually we are not interested in wealth, we are usually interested in diet or smoking/nonsmoking behaviour etc. However, wealthy people can afford more nutritious food than poor people and wealthy people can access smoking cessation programs (so they are less likely to smoke). My point is: we don't care about wealth per se in many of these studies but, since wealth dictates many of the other variables we are interested in studying, we need to include it as a covariate. That is a fairly nuanced concept, though.
+
+https://www.statisticshowto.datasciencecentral.com/covariate/
+
+Covariate data set is from Whitlock and Schluter and describes two types, large/lazy and small/worker, of the eusocial mammal naked mole rats.
+In this case, the explanatory variable is thought to be the size of the naked mole rat (large versus small) and the response variable is the amount of energy exerted (lazy, infrequent worker versus consistent worker). The researchers have knowledge of the caste system employed by the naked mole rat which involves a queen, reproducing males and two kinds of workers (who don't reproduce): small workers who work constantly and larger workers who sleep most of the time except after catastrophic events when they finally wake up and work. Since the infrequent (lazy) mole rats are larger than the frequent workers, the two categories of workers are confounded with size and so that dependent categorical variable (frequent or lazy) needs to be incorporated as a covariate - you can't get rid of it via blocking or treat it as a second independent variable because it is dependent on the size of the mole rat. 
+
+There are TWO basic rounds of fitting when including a covariate into a model. This is a bit tricky, I appreciate, so I will try to set it up as cleanly as possible: 
+
+### Step 1 - Does the model fit significantly better when the interaction between the covariate and the explanatory size variable is included in the model?
+This means that you need to set up a hypothesis test where the null hypothesis does not include the interaction between the covariate and the variable and compare it to the alternate hypothesis where the model DOES include the interaction between the covariate and variable. Hopefully, the null hypothesis/module, which DOES NOT include the interaction, does not significantly account for more variation (or improve the fit of the data to the model) and you can continue your analysis without worrying about keeping the interaction term. If the interaction is found to significantly improve the fit of the model then you have to keep it and you have a much more complex situation on your hands (we won't discuss how to do additional analysis necessary for that case in this module since it is already really really long. General Summary of strategy that you can read about elsewhere: you need to pick particular fixed values for your variable of interest and focus on just analyzing those fixed values.).  
+
+### Step 2 - If the addition of the interaction of the covariate does not improve the fit of the model then remove it and re-analyse the fit using regular ANOVA tools. 
+
+Once we have determined that including the pesky interaction of the covariate doesn't improve the fit of the data to our model then we can move on...
+
+Let's start the two step analysis now. First, preliminary actions: read in data and look at it! 
+
+```{r}
+# read in the data set
+molerats<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/Whitlock_Schluter_Publisher/Datasets/18/18e4MoleRatLayabouts.csv")
+#peek at the data
+head(molerats)
+tail(molerats)
+attach(molerats)
+names(molerats)
+```
+Let's plot the data but order it by size to see any visual evidence of effect:
+```{r}
+#sort the data set by size. It looks as though the lazy workers are the larger ones.
+# which is what we expect. 
+# dataframe_name[] is a way to retrieve the values in rows and columns, ie: dataframe_name[1,2] would return the value located in the cell in row 1 and column 2. 
+# in the following case, we use it to order all of the columns - that is why there is nothing specified after the ',' - for the smallest to largest lnmass. 
+molerats_sorted<-molerats[order(lnmass),]
+# you can compare the resulting output to the original molerats dataframe, before sorting,
+molerats_sorted
+# plot energy by mass. By choosing type="n" in the next line, we are setting up the labels and axis
+# but not yet filling them in
+# Note: this is quite similar to the idea of 'geoms' in ggplot2.
+plot(lnenergy ~ lnmass, type = "n")
+# add points from the subset data set - based on size - that are workers and plot them as open circles
+points(lnenergy ~ lnmass, data = subset(molerats, caste == "worker"), pch = 1, col = "red")
+# add points that are lazy workers and use filled in red circles
+points(lnenergy ~ lnmass, data = subset(molerats, caste == "lazy"), pch = 16, col = "red")
+```
+This plot makes it seem like size could be a covariate  - as we suspected- since the larger class of mole rats (the infrequent/lazy workers who mostly sleep) are clustered in one area of the plot more than the frequent workers (open red circles). Moving on...
+Test the fit of the model without an interaction term and with an interaction term: 
+```{r}
+# no interaction term, this just is additive model
+molerats_no_interaction<-lm(lnenergy ~ lnmass + caste)
+#add a column to our dataframe. I'm not sure if we have done this before or not...if not, this is how that is done!
+molerats$predictedNoInteract <- predict(molerats_no_interaction)
+#include interaction term, this is now the full model since it includes interaction
+molerats_full_model<- lm(lnenergy ~ lnmass * caste)
+#add column of predicted interaction
+molerats$predictedInteract <- predict(molerats_full_model)
+```
+
+Let's see how a scatterplot of our model holds up: 
+```{r}
+# I am not entirely sure why but we seem need to redraw a plot in the same chunk to add to it. 
+#re-draw the plot from line 101 through 105 - this range might change a bit - chance a  here: 
+plot(lnenergy ~ lnmass, type = "n")
+points(lnenergy ~ lnmass, data = subset(molerats, caste == "worker"), pch = 1, col = "red")
+points(lnenergy ~ lnmass, data = subset(molerats, caste == "lazy"), pch = 16, col = "red")
+#add lines of best fit for each of the two categories. Do you they have different slopes? Remember that this means: slopes are significantly different
+lines(predictedInteract ~ lnmass, data = subset(molerats, caste == "worker"), lwd = 1.5, lty = 2)
+lines(predictedInteract ~ lnmass, data = subset(molerats, caste == "lazy"), lwd = 1.5, lty = 2)
+```
+The lines of best fit through the lazy workers and through the frequent workers look like they have slightly different slopes (you can tell this because the slopes look like they might cross each other at a certain point). But the slopes don't look that different. So, let's do an actual quantative test (ANOVA) now where we compare the variation explained by including the interaction and without it:
+```{r}
+anova(molerats_full_model)
+```
+We fail to reject any significant difference in fits by including any interaction term between Caste and mass (P-value of the interaction term between mass and caste is 0.3206094 which means that the null hypothesis that the slopes are the same between the two categories can't be rejected). 
+
+Since there are two rounds of model fitting in basic ANCOVA, we then move on to *round 2* where we fit this as a one variable ANOVA....
+
+Does our dataset fulfill assumptions of general liner models such as residuals being scattered (this was discussed in an earlier chapter): 
+```{r}
+plot(residuals(molerats_no_interaction) ~ fitted(molerats_no_interaction) )
+#horizontal line that goes through 0
+abline(0,0)
+```
+The residual scatter seems to be equally above the line and below....
+  
+```{r}
+molerats_no_interaction<- lm(lnenergy ~ lnmass + caste)
+anova(molerats_no_interaction)
+```
+
+Both mass and caste are significant in this model (they both result in P-values that are less than 0.05).
+
+#### 3. multivariate analysis. 
+Note: FOR ADVANCED students only who want to know more (this is not required, it is just for personal interest): There is a really cool analysis done here that includes drawing out a phylogeny and using different 'clustering' methods on the same data set: https://richardlent.github.io/post/multivariate-analysis-with-r/
+
+
+warning: One underappreciated aspect of multivariate analysis is that R sequentially analyzes the fit of the model (in contrast to other popular statistics programs which analyse marginals. There are pros and cons to each of these strategies but they are waaaaay beyond the scope of this one credit course. However, if you use your R training in the 'real world' after this course is over, you should keep this difference in mind.). What this means for your analysis: if you have unbalanced design (differing numbers of samples in each variable), you will have two different p-values with the following two different ways of inputting the model: 
+
+Verion 1: y~A+B+A:B (Note that you can also write this as y~A*B which will also investigate any improvements of fit with interactions between variables)
+
+Version 2: y~A+B+AB (or, once again, y~B*A)
+ 
+This demonstrates yet another benefit of balanced design since both of these formula are equivalent BUT ONLY when they have the same number of samples in each factor. 
+
+We are going to use another Whitlock and Schluter example from chapter 18: How algae is effected by the presence of herbivores such as snails (who eat algae) and the algae's distance from the tide (low or mid tide). It has a balanced design so it doesn't matter which way we input the data. 
+
+
+We will read the file in first:
+```{r}
+algae_two_factor<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/Whitlock_Schluter_Publisher/Datasets/18/18e3IntertidalAlgae.csv")
+attach(algae_two_factor)
+names(algae_two_factor)
+head(algae_two_factor)
+```
+There are three sets of hypotheses being tested: 
+1. $H_O$: there is NO significant interaction term (whether the algae is located at mid or low water tide mark does not influence the effect of the herbivore on the algae growth)
+  $H_A$: There is a significant interaction term so the effect of herbivory on algal growth is dependent on whether the algae is located at the mid or low tide mark.
+
+2. $H_O$ There is no effect of herbivory on algal growth
+
+3. $H_O$ There is no effect of location, either at mid or low tide, on algal growth
+
+1. Since both variables, herbivores (present versus absent) and algal distance from water (mid-tide or low-tide) are both fixed effects, we use lm() to analyse the area square of the algal growth. In the first chunk we do not specify any interactions between distance from tide and herbivores (this would be the null hypothesis specified in 1):
+```{r}
+#no interaction included
+algae.NoInteractModel<-lm(sqrtarea~height+herbivores)
+```
+Now, we include an interaction model: 
+```{r}
+algae.FullModel<-lm(sqrtarea~height+herbivores+height:herbivores)
+```
+Let's compare the two models: 
+```{r}
+anova(algae.NoInteractModel, algae.FullModel)
+```
+We can also test the full model sequentially (removing one variable, so working through all three of the hypotheses given above, at a time with the following command):
+```{r}
+anova(algae.FullModel)
+```
+Let's see what the residual plot from the full model looks like: 
+```{r}
+plot(residuals(algae.FullModel) ~ fitted(algae.FullModel) )
+abline(0,0)
+```
+
+#### PCA Examples:
+----------
+Principle Component Analysis - another way of clustering your data to account for as much variation as possible!
+----------
+PCA is enjoying a renaissance in the bioinformatics world for good reason: it provides a straight-foward way to assign the major drivers of variation (usually genetic or 'biomarkers', if you are a biologist) in a system. It does this by determining the largest eigenvalue of a data set, which is the single most variable ``component'' (a linear combination of the variables), and its associated eigenvector. This eigenvector (remember that vectors specify directions) creates a new axis for the data (rather than the X and Y axis we started with) which runs through the most variable part. Due to some fancy algebra which we will not attempt to review here, the second most variable dimension is exactly orthogonal (a term which means 90 degrees or at a right angle to) to the first. 
+
+Why is PCA useful? __It reduces the dimensionality of your data and identifies which axes are the most important in driving the variation of the characteristic under investigation__. It may be surprising to you that you can reduce the dimensionality of your data _without losing much information_. This phenomenon occurs when the variables are highly correlated. For example, if you include measurements on both length of arms and length of legs, you will find that you probably only need one (or mostly one) of these measurements when building a model that predicts height (because tall people probably have both long arms and long legs whereas short people probably mostly have short arms and short legs). Some of the information in that case is redundant. When the correlation between variables is weak, you will need more variables to account for all the variation in your data set. 
+
+PCA allows you to start with a certain number of traits - of which some have highly correlated values- and to extract a smaller set of traits that are uncorrelated (the semi-fancy mathematical expression for this is that PCA summarizes correlations among observations by creating linear combinations of a smaller set of observations). By removing the redundant variables, PCA captures which variables are actually foundational and important. In a general sense, you can think of PCA as reducing the noise of your system and helping highlight which variables are actually important for the characteristic that you are interested in. Much like other general models we have investigated, PCA allows us to allocate the variability to axes that are useful for our particular data.  
+ 
+First of all, there are two major PCA commands in R that you will need to know that have similar names (so watch it!): __princomp__ and __prcomp__. You might want to write them out by hand on scrap paper. Spectral decomposition (covariances/correlations between variables) is used by the command __princomp__; whereas singular value decomposition (SVD) examines covariances/correlations between individuals and is used by the __prcomp__ function. But that is a lot of technical jargon, isn't it? 
+
+Here is the comparision of the two: Basically, __prcomp__ centers the variable to force it to have mean =0 and by using scale=TRUE, we also normalize the variables to have standard deviation equal to 1. __prcomp__ is the (slightly) preferred method over __princomp__ for running PCA for reasons that are far beyond the scope of this little tutorial. We'll see both commands in this .rmd file so you can play around with them and compare their results/output, if you like. 
+
+Additionally, PCA can be carried out with a choice between the covariance or the correlation matrix. The usual rule of thumb is that if the variances of the variables are very different, you should use the correlation matrix so that the different variances don't disproportionately influence the initial couple of principle components. We will set the argument ''cor'' to FALSE for the princomp function since we will use the covariance matrix. If we set ''cor'' to TRUE, it would use the correlation matrix instead.
+
+##### Example 1: nucleotide data set 
+We will use a sequence data set from 44 sequences that has been previously filtered to ensure that only the variant nucleotide sites (there are 26 variant sites) are included in the analysis. The data are percentage of the most common nucleotide at that variant site for 44 individuals. We are going to compare what happens between princomp and prcomp functions. We will start with princomp and we will use the covariance matrix instead of the correlation matrix. 
+
+Note: I have set up each chunk with hashed out commands that can be unhashed to investigate what the commands do. This will allow you to see what happens when you use each function, since the arguments for both are included in the chunks and you can just hash them out if you don't want to compare with results from correlation matrix: 
+
+```{r}
+#read in the data
+pca_groomed<-read.csv("/Users/daniellepresgraves/Desktop/BIO_218P/Lectures_2018_RMD/PCA_data_lec_11_variable_sites_numeric.csv",header=TRUE)
+# do we need to see all the data? Hmmm. Probably. 
+pca_groomed
+# Congratulations - it's a data frame!
+class(pca_groomed)
+# we can see that there are 26 columns
+names(pca_groomed)
+# we can the summary information for each of the 26 columns! This is really useful.
+# it will show us information like median, mean, 3rd quartile and max values
+summary(pca_groomed)
+
+sd.pca_groomed<-apply(pca_groomed,2,sd)
+#The ''2'' indicates that you are calculating the standard deviations of each of the 26 columns. In this case, the results suggests no significant differences between the stand. deviations - and therefore also the variances - of the 26 variables. This means that it should be fairly equivalent to use either the correlation matrix or the covariance matrix. In this circumstance, the covariance matrix is the preferred option.
+cat("Here are the standard deviations of the 26 variabe sites, they are notably similar to each other so we would use covariance since we don't need to use correlation: \n ")
+sd.pca_groomed
+```
+
+```{r}
+#####################
+# REMEMBER: we can run pca on either correlation or covariance matrices. When your data are on the same - or similar scales - covariance is a good choice. When your data are on widely disparate scales, correlation standardizes the data.
+#####################
+cat("here is the resultant matrix using covariance: \n")
+site_cov<-cov(pca_groomed)
+site_cov
+
+#####################
+# we could also use a correlation matrix (usually used when there is a large difference in scale): When the correlation between variables is high, we can reduce the dimensionality (the entire point of PCA) so we need to know what the correlation is like:
+#####################
+cat("here is the resultant matrix using correlation: \n")
+site_correlation<-cor(pca_groomed)
+site_correlation
+```
+
+
+```{r}
+# WHAT if we were using the correlation matrix? Remember that we won't use the correlation matrix because, if possible, it is better to use covariance matrix and we are able to do so because sd weren't very different in our nucleotide file. We would only HAVE to use the correlation matrix if the sd and therefore the variances were very different. However, since I', trying to illustrate how you would use these functions and options if you had data that didn't have similar sd, I am breaking the rules: 
+pca_groomed.pca.cor<-princomp(pca_groomed,cor=TRUE)
+cat("PCA with princomp function and CORRELATION matrix: \n")
+pca_groomed.pca.cor
+# we try that again to see what the difference is with basing the pca on covariance matrix data instead of correlation matrix data (this is what we are actually doing)
+pca_groomed.pca.cov<-princomp(pca_groomed, cor=FALSE)
+cat("PCA with princomp function and COVARIANCE matrix: \n")
+pca_groomed.pca.cov
+#names(pca_groomed.pca.cov)
+#loadings(pca_groomed.pca.cov)
+cat("Let's compare the consequence of using a correlation matrix compared to a covariance matix. Note that both of these will give us the proportion of cumulative variance explained by the the variable which is really what we want to know! \n")
+cat("correlation: \n")
+summary(pca_groomed.pca.cor)
+cat("Covariance: \n")
+summary(pca_groomed.pca.cov)
+```
+
+As you can see, when you call the summary function on the object (in this case pca_groomed.pca.cor and the pca_groomed.pca.cov) that results from the princomp function, you get a summary of which of the 26 variables contributes the most to the variation in the data set. In this case, only 5 variables are needed to account for 100% of the total variation in the data set -- which is a significant reduction down from 26 variables (which are the variable nucleotide sites). That means that you only need to include 5 linear combinations of variables to account for ALL the variation in the model. This is a significant reduction in dimensionality. 
+
+One thing should be noted about the above that can be confusing: these 5 variables are not the same original variables, rather, they are linear combinations of some of the original 26 variables. So these 5 are not 5 particular SNP sites. However, you don't need to worry about that too much.   
+
+The summary function produces an object that contains many useful columns and can be plotted to produce something called a ''SCREE plot'' which gives you a visual interpretation of how many variables you need to mostly capture the variation in your data set. How do you tell how many principle components you need? There are a few rules. Probably the best rule is to take as many components as total between 80-90% of the total variation... in this case, that would mean that we would only need to use one component! You can also plot the results of the fitted princomps and see where the ''elbow'' in the line is. It is at this point where you can stop including components.
+```{r}
+# this line should give a bar plot
+plot(pca_groomed.pca.cov, type="b")
+# a more traditional 'elbow plot'
+plot(pca_groomed.pca.cov, type ='lines')
+```
+
+
+Just remember that LIKE ALL statistical models, PCA does have assumptions baked into it that will influence the results. PCA is especially vulnerable to violations of a balanced design. (see Gil McVean, 2009 ``A genealogical interpretation of Principle Component Analysis'' ).  
+
+We will use this library (you will need to install it if you want to use it). Much like ggplot2 with regular graphs, it can make all of your PCA plots look beautiful: 
+```{r}
+#install.packages("factoextra")
+library(factoextra)
+```
+Let's have a look at what happens when we do the same procedure but for prcomp WHICH IS THE PREFERRED FUNCTION to use for most data. It is obviously similar to the procedure above but instead of using a basic R scree plot (which you could do for this data set), I use the factoextra methods to make it look prettier:
+
+```{r}
+pca_groomed.pca.prcomp<-prcomp(pca_groomed,scale=TRUE)
+pca_groomed.pca.prcomp
+#visualize it with the factoextra package that we loaded in the previous R chunk
+# remember that you can check the functions of each package by using the help menu
+#the following extracts and visualizes the eigenvalues of variables
+fviz_eig(pca_groomed.pca.prcomp)
+names(pca_groomed.pca.prcomp)
+summary(pca_groomed.pca.prcomp)
+```
+The following is another visualization of the 44 individuals that have 26 variable sites. You can see that the two new axes can explain a large chunk of the variation
+# our data has 8 australians, 10 canadians, 9 chinese and 17 south korean samples
+```{r}
+groups<-as.factor(c(rep(c("Australia"),8),rep(c("Canada"),10),rep(c("China"),9),rep(c("Skorea"),17)))
+#let's check and see what we did here: 
+groups
+#try to plot it. The following function visualizes the PCA for EACH individual data point - individuals 1 through 44. This doesn't 
+#produce a very pretty plot but you can play with the functions in this library and probably improve this!
+fviz_pca_ind(pca_groomed.pca.prcomp,col.ind=groups,repel=TRUE)     # Avoid text overlapping
+# You can generally get a sense that the continent that you sampled individuals from is one of the drivers of variation in this example. Individuals from Canada cluster together, individuals from Australia cluser together etc. 
+
+```
+
+Here is an example (John Novembre!) on humans where you can see a similar graph that clusters genomic variation using PCA that overlaps with a map of Europe. Novembre was one of the first individual to apply PCA to genomic data and was richly rewarded for being awesome with a MacArthur Genuis award (Besides being super-smart, he is super nice): https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2735096/
+
+There is an additional example that uses the same library (with a built in data set) here: http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/118-principal-component-analysis-in-r-prcomp-vs-princomp/#prcomp-and-princomp-functions
+
+Here is a second example of prcomp analysis that uses a built-in data set about Irises (but we need to transform it). If you understood the example above or the one in the accompanying chapter in your RBook (which uses princomp just to demonstrate that it is a similar process), you don't need to work through this example but, since PCA can be confusing, I wanted another example to be available to you. 
+```{r}
+data(iris)
+#get the first six rows
+head(iris)
+```
+We are going to apply PCA to the four continuous variables. Due to prior analysis, we know that we need to log transform these continuous variables since they are skewed. PCA is influenced by skewness of variables so ensuring that variables are normally distributed is fairly important. 
+
+```{r}
+# we transform the variables from columns 1 through 4 but not, of course, the species
+log.ir<-log(iris[,1:4])
+ir.species<-iris[,5]
+#bind the transformed and the non-transformed columns back into one dataframe again using cbind()
+ir_trans<-cbind(log.ir,ir.species)
+ir_trans
+# we have a look to confirm that the dataframe is what we expect. 
+names(log.ir)
+loadings(log.ir)
+```
+We can use prcomp function but you might also be interested in knowing that you can change the default values in this function to ensure that your mean and sd are scaled. We can then compare the output of using the default values and using specified arguments: 
+```{r}
+ir.pca<-prcomp(log.ir)
+ir.pca.cen<-prcomp(log.ir,center = TRUE,scale. = TRUE)
+print(ir.pca)
+print(ir.pca.cen)
+plot(ir.pca)
+plot(ir.pca.cen)
+# you can see that by scaling the dataset, we need more than one principle component to account for the same amount of variance
+summary(ir.pca)
+summary(ir.pca.cen)
+```
+```{r}
+plot(ir.pca, type ='lines')
+plot(ir.pca.cen,type='lines',col='red')
+```
+Just like in the previous example, we will use the factoextra package to make our PCA plot look pretty: 
+```{r}
+ir.pca
+fviz_eig(ir.pca)
+names(ir.pca)
+summary(ir.pca)
+```
+
+And there you have it: suddenly you have access to some of the most sophisticated and popular statistical analyses in biology. In the last module (module 12), we are going to look into a little bit of programming. Don't forget that if you are interested in deepening your understanding of statistics and programming in R, there is a course called STT 276 (beginning in January 2019!). Here is the description of the course from the website: 
+
+'This course offers an introduction to statistical computing in the R environment. To start, focus is placed on assigning objects, creating data structures, applying Boolean logic, importing and subsetting data, data manipulation (both long and short formats), and implementing elementary commands and built-in functions from R packages. In the second portion of the course, students learn more advanced topics of writing loops, developing functions, building graphics, debugging code, and text mining. Topics will be illustrated using key statistical tools, including basic data summarization and exploration, linear models, and simulations. The course will rely upon the use of R Markdown as an essential tool for effectively integrating R code and output into presentable reports. Basic skills with a text editor (such as Notepad) and Microsoft Excel are assumed, as is basic knowledge of statistical inference.'
+
+detach everything: 
+```{r}
+detach(molerats)
+detach(algae_two_factor)
+```

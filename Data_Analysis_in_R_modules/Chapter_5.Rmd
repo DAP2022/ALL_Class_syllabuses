@@ -1,0 +1,157 @@
+---
+title: "chapter_5_Fitting_models"
+author: "Danielle A Presgraves"
+date: "9/7/2018"
+output: word_document
+---
+### introduction
+In the last module, we investigated the binomial distribution and tested out a data set with the binomial test. We also, at the same time, compared the results of the exact binomial test (once again: based on the binomial distribution) with the results of the prop.test which is based on an approximate distribution, the $\chi^2$ distribution. Today we will learn about two statistical tests that test for the independence of two variables, there will be one exact test and one approximate test. If you don't remember what a $\chi^2$ contingency test is, don't worry: we'll wait. (or see here: http://www.statisticssolutions.com/non-parametric-analysis-chi-square/  or here:  https://en.wikipedia.org/wiki/Chi-squared_test)
+
+### What we will do today:
+1. A little experiment on ourselves (we will analyze the results in PS 6)
+
+2. Learn how to use mosaicplot (remember that we already saw this with the Titanic data set and the HairEyeColor data set) and learn about some of the different data types in R
+
+3. Test for independence of two categorical variables using the $\chi^2$ contingency
+
+4. Use Fisher's exact test on a table made up of categories of molecular data
+
+We start off with directly inputting data. So far, we have mostly dealt with data in a dataframe format (similar to an excel spreadsheet). Since this is the most flexible kind of data in R, matrices and vectors and tables all have various restrictions on how input data looks, dataframes are common (ggplot2 requires dataframes, for instance). We're going to input data and turn it into a matrix so that we can visualize it as a mosaicplot and then conduct a $\chi^2$ contingency test on it. 
+
+### Experiment on ourselves. In Chapter 5 of your R book, the last paragraph of "The origins of Species" is given to you. Please follow along with section 5.2 and record the results. Don't peek until you are finished!
+
+### How to input matrix data and then turn it into a table:
+We're using the smoking and exercise example that is in chapter 5 of the R book. We will want to eventually answer the question: **are smoking and frequent exercising independent events? **
+```{r}
+#input your data as a column starting with the first element of the first column 
+# and going to the last element of the first column and then the first element
+# of the second column. This is a bit awkward, I admit. 
+smoking_exercise<-c(7,9,12,87,4,8,7,102)
+# always double check to ensure that the variable gives us what we expect 
+# along the way!
+smoking_exercise
+#force our table, which is currently in a long vector rather than a table, 
+# into two columns and four rows. We use the dim() function to do that in the
+# following manner: 
+dim(smoking_exercise)=c(4,2)
+#print out the entire variable to ensure that it really is the matrix that we 
+# are expecting. 
+smoking_exercise
+# is it a matrix? Use class() to confirm
+class(smoking_exercise)
+# we could ask by using is.matrix(test_table_class)
+# what are the attributes of this matrix? 
+attributes(smoking_exercise)
+# This isn't quite what we want. We need to add in the names of the rows and the columns
+colnames(smoking_exercise)<-c("Frequent Exerciser","Seldom Exerciser")
+rownames(smoking_exercise)<-c("Heavy","Frequent","Occasional","Never")
+#always with the double checking...
+smoking_exercise
+class(smoking_exercise)
+# okay. it is a matrix. NOW we will convert it to a table! Hah!
+# forcing the matrix to be a dataframe and testing that it is a table. 
+smoking_exercise<-as.table(smoking_exercise)
+smoking_exercise_DF<-as.data.frame(smoking_exercise)
+class(smoking_exercise)
+#this is the dataframe version of your data set in case you want to use
+# the ggplot2 geom_mosaic to plot your data since ggplot2 seems to insist
+# on dataframes for your data sets. 
+class(smoking_exercise_DF)
+```
+
+### Mosaic plot
+Independence versus dependence can often be superficially initally assessed using a mosaic plot (we saw this with the Titanic and HairEyeColor data sets previously): 
+
+Note: that there is a geom_mosaic layer available in the ggplot2 package which will undoubtedly produce a more attractive plot than basic R does but you will need to ensure that your dataset is a dataframe and not a table in order to use ggplot2 (you can do that if you wish because, of course, ggplot2 is awesome but I suggest that you rename your table variable so that you have a table version and a dataframe version of the smoking/exercise dataset).
+
+```{r}
+# for the base R - not ggplot2:
+#pink for non-smoking lungs and grey for smoking lungs
+mosaicplot(smoking_exercise, main="Exercising and Smoking",
+col = c("Pink","Grey"))
+```
+
+
+### Run the a $\chi^2$ contingency test: 
+
+Visual display and suggestion are usually not enough to provide evidence for a phenomenon (this will vary by field, of course). We will run a a$\chi^2$ contingency test.
+
+Digression: I am not sure that I have had reason to mention this yet but it is a good programming habit to get into to 'park' the results of statistical tests into an informatively-named variable that has a .ending that reflects the test used to create the variable. That is a hard sentence to parse, isn't it? The command in the next cell is an example of what I mean: 'Exercise_Smoking.chi' is the variable where the results of running the 'chisq.test(smoking_exercise)' are parked in memory. This will make your life - and the memory of your computer- much easier. 
+
+```{r, echo=FALSE}
+#park the chisq.test results into the Exercise_Smoking.chi variable and then call it
+Exercise_Smoking.chi<-chisq.test(smoking_exercise)
+Exercise_Smoking.chi
+# Oooooh! look at that: in the Exercise_Smoking.chi variable where we parked 
+# our results, we have 9 columns which we can look at individually. 
+names(Exercise_Smoking.chi)
+#let's look at the expected column. This should be the numbers of individuals
+# in each category that is expected by the model: 
+Exercise_Smoking.chi$"expected"
+#let's look at the observed column. This is the number of individuals in 
+# each category that is actually observed in our data set: 
+Exercise_Smoking.chi$"observed"
+#when you conduct a $\chi^2$ contingency test by hand, you are usually trying 
+# to find the difference between the observed count and the expected column so
+# this could be useful on other homework assignments!
+```
+### Another direct Input Example that illustrates the margin.table(). Once again, we saw this with the Titanic data on the first lecture.: 
+```{r}
+#create the matrix a different way than what we used previously. Just because 
+# I want to demonstrate that there is more than one way to do it!
+smoke<-matrix(c(51,43,22,92,28,21,68,22,9),ncol=3,byrow=TRUE)
+smoke
+#assign column and row names using the c() function along with the desired 
+# column and row names
+colnames(smoke)<-c("High","Low","Middle")
+rownames(smoke)<-c("Current","Former","Never")
+# now what does the smoke matrix look like?
+smoke
+# we're sure it is a matrix, right?
+class(smoke)
+# Okay. Let's force it to be a table
+smoke<-as.table(smoke)
+# double check because I am paranoid. 
+class(smoke)
+# Okay. Now we can get an overall count of
+# all individuals in the smoke table - this should be equal to
+# 51+43+22+92+28+21+68+22+9 = 356
+margin.table(smoke)
+# hurray! It is!
+# Now we specify that we want to take row sums by giving the 1 as an argument
+# which corresponds to row. Why? Because it is. dimension 1 is always rows in R 
+# and dimension 2 is always columns.I blame this on the fact that R is an old and 
+# ornery  vector language and somehow we are just supposed to know this convention. 
+# Now you do!  
+margin.table(smoke,1)
+# Now we specify that we want to take column sums by giving 2 as an argument
+margin.table(smoke,2)
+```
+### Fisher's exact test: 
+Similiar to $\chi^2$ contingency test but has fewer assumptions.This description is taken directly from chapter 5 of your Rbook: 
+
+One of the most common tests of speciation in biology is called the *McDonald- Kreitman test*. It aligns sequences of multiple species of an organism and counts the number of two categories of mutation between them. The first category is **synonymous sites**: meaning that due to the degeneracy of the genetic code the nucleotide substitution does not result in a different amino acid. The second category is **non-synonymous sites**: a change in nucleotide does result in the specification of a different amino acid.
+Nucleotide sites that varied were also categorized as **polymorphic** - they varied within a species - and **fixed differences** - they did not vary within a species but did vary between species. The underlying hypothesis is that: ” In the absence of natural selection, the ratio of synonymous to nonsynonymous sites should be the same for polymorphisms and fixed differences.”
+
+Like all statistical tests, MK has it's problems but under particular circumstances it provides initial information about what evolutionary force could be driving molecular variation so, despite its limitations, it is still commonly used. If you are interested, you can learn more here: https://en.wikipedia.org/wiki/McDonald–Kreitman_test 
+```{r}
+#input the data from chapter 5
+fisher_example<-matrix(c(43,2,17,7),ncol=2,byrow=TRUE)
+fisher_example_table<-as.table(fisher_example)
+class(fisher_example_table)
+#take a look at the dataset
+fisher_example_table
+#assign the column and row names
+colnames(fisher_example_table)<-c("Synonymous","NonSynonymous")
+rownames(fisher_example_table)<-c("Polymorphisms","Fixed")
+fisher_example_table
+```
+With this table in hand, we can test the $H_o$ which, in this case, will be p(Non-syn mutations/syn mutations WITHIN a species) = p(Non-syn mutations/syn mutations BETWEEN a species). So, $H_o: \frac{2}{43}=\frac{7}{17}$
+
+```{r}
+fisher_example_table.fisher<-fisher.test(fisher_example_table)
+fisher_example_table.fisher
+
+```
+ The $H_o: \frac{2}{43}=\frac{7}{17}$ is rejected.
+ In this case, Fisher's test results in a conditional max. likelihood estimate of $\frac{\frac{43}{2}}{\frac{17}{7}} \approx 8.54$. This gives the ratio of 8.54 polymorphisms to each fixed difference between the species. This is suggestive of negative (purifying) selection. If there was a higher ratio of fixed differences to polymorphisms, that would suggest that positive (directional) selection was occurring. 

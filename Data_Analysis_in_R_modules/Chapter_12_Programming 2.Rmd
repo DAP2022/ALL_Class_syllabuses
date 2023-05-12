@@ -1,0 +1,282 @@
+---
+title: "Chapter_12_Programming"
+author: "Danielle A Presgraves"
+date: "4/15/2018"
+output: pdf_document
+---
+### Introduction and preamble:
+One of the major ideas in programming is that it allows you to break down a complex problem into more straightforward sub-problems. One of the tools available to us to do this is the mighty FOR loop (and, of course, the *apply family).
+```{r}
+#For loops - repeatability, encapsulation and breaking down a problem is important in programming!
+for(i in 1:10){
+  print("Remember that there is a syntax to defining your loops. RStudio makes it straightforward, though!")
+}
+#we need to have already defined a vector, x in order for the for loop to work. 
+x<-c(1,4,9,16,25,36,49,64,81,100)
+# instead of giving it a set number, we can base the number of loops on the length of the particular vector x
+for(i in 1:length(x)){
+  print(x[i])           
+}
+```
+R is particularly adept at statistical analysis of your data sets. However, what if you wanted to write your own statistics? Let's say we wanted to write a function that allowed us to calculate the mean of a data set (obviously we know that we could use the built-in mean() but we might want to write our own for some reason).
+```{r}
+my_mean <- function(my_vector) {
+  sum(my_vector)/length(my_vector)
+}
+# once the function has been defined, we can call it with an argument
+my_mean(c(1,2,3,4,5,6))
+```
+
+Some things that we haven't gone into detail about in this course (because we have mostly used R as a data analysis language). 
+##### 1. R is mostly a functional programming language.
+This means that higher order functions - and list comprehensions - abound! What are higher order functions? Higher order functions are functions that take another function as an argument and then do something with it. If you have familiarity with other programming languages, you will have seen higher order functions like filter, map, reduce and other less popular higher order functions such as find, position and negate. Note: We've already seen the *apply family which is a lot like the higher order map function in other languages.
+
+##### 2. The SWIRL() package is a fantastic entry point into R functionality.
+swirl() will allow you to work through various programming concepts in an interactive environoment. You will need to install the swirl package and load it. For the most part, the package itself will guide you through your options and is reasonably user-friendly. It is also an efficient, although a bit dry, way to quickly review concepts in the R language. It should not come as a surprise that programming languages often have to solve similar problems and do so in similar ways.
+
+SWIRL() includes the following chapters:
+
+1: Basic Building Blocks      	  
+2: Workspace and Files     
+3: Sequences of Numbers           
+4: Vectors                 
+5: Missing Values            		  
+6: Subsetting Vectors      
+7: Matrices and Data Frames       
+8: Logic                   
+9: Functions                 		  
+10: lapply and sapply       
+11: vapply and tapply      	      
+12: Looking at Data         
+13: Simulation                		
+14: Dates and Times         
+15: Base Graphics 
+
+You can always leave swirl() with the command bye(), and you can return to the main menu by typing main(). 
+```{r}
+#load the swirl library after installing the package so that kniter works!
+library("swirl")
+```
+ 
+#### Review!
+Chapter 12 focuses on the content from the SWIRL() library \textbf{Chapter 9: Functions}. However, the following chunk includes a summary of the other chapters which are a basic review of material we have already seen (you should work through the chapters yourself if you are uncertain about your knowledge of the topics). 
+```{r}
+# R is a functional programming language. You will also hear it called a "vector" language. As such, it relies on a number of higher order functions like Filter, Map, Reduce etc. For example: 
+small.odd.nums<-Filter(function(x){x%%2==1},1:10)
+small.odd.nums
+```
+```{r}
+# Chapter 1 of Swirl(): Basic Building Blocks of R
+# Especially important: the concatenate/combine function c()
+Z<-c(1.1, 9,3.14)
+class(Z)
+Z*2+100 
+list_1<-c(1,2,3)
+list_2<-c(4,5,6)
+list_3<-c(list_1,list_2)
+class(list_3)
+list_3
+```
+```{r}
+# You can skip Chapter 2: Workspace and files. However if you are interested in Linux/unix, you might enjoy working through the brief introduction to file management
+#Chapter3: Sequences and numbers
+#Especially slicing. The ":" means that all numbers from lower to upper are included.
+d<-1:20
+d
+# increase by 1 but since you are starting at 3.14, your output is a bit different.... 
+e<-pi:10
+e
+# You can decrease as well
+f<-15:1
+f
+# You can create a sequence of numbers by using the seq() function which also gives you the option of explicitly specifying an increment size.
+
+g<-seq(1,20,by=1.5)
+g
+# rep() allows us to include an argument that specifies how many times something should be repeated. 
+h<-rep(1:5,3)
+h
+```
+```{r}
+# Chapter 4: Vectors
+# Remember Boolean logic? Surprise - it is here again!
+# R offers && versus & and || and | which behave differently on vectors. 
+(3>5)|(4==4)
+# paste()
+my_char<-c("my", "name","is")
+my_char
+paste(my_char,collapse="")
+#Chapter 5 addresses missing values: NA. 
+#Chapter 6: subsetting vectors
+# create a vector, X
+X<-1:50
+X
+# Vector indexing: the first 10 elements
+X[1:10]
+# only include elements 3,6 and 8
+X[c(3,6,8)]
+# include all elements EXCEPT 2 and 41
+X[c(-2,-41)]
+X
+# This is an example of named elements which means that instead of indexing element 1 or element 2, you can also assign them names like foo or orf or doo or any other ridiculous name that you can think of. In the example below, we have created a numeric list of two elements where the first element is called 'foo' and the second element is "orf". Instead of calling an element by Y[1] as we could do if it was a regular vector, we can call the first element by its name, 'foo". The take home message is simply that we have more ways of indexing other than just indexing with numbers.
+Y<-c(foo=2,orf=10)
+Y
+names(Y)
+Y["foo"]
+# Chapter 7: Matrices and Data frames
+# we create a vector called example_vector. Once that is created, we can run built in functions that exist for matrices and vectors. We can ask about specific attributes of the vector or matrix by running commands class, attributes and length. 
+example_vector<-1:20
+class(example_vector)
+# We can turn a vector into a matrix by passing the vector into the dim() function and specifying how many rows and column the final matrix should have. In this case, we have turned the vector into a matrix with 4 rows and 5 columns. 
+dim(example_vector)<-c(4,5)
+example_vector
+class(example_vector)
+attributes(example_vector)
+length(example_vector)
+# A bit like the c() function, there are two functions that bind lone vectors into a dataframe. rbind() combines rows and cbind() combines columns. Remember the list_2 that we created above? We can bind two of them together to create a matrix.  
+list_4<-rbind(list_2,list_2)
+list_4
+# Test what type of data they are now: 
+class(list_4)
+# Chapter 8: Boolean logic. Evaluate the following examples from swirl()
+FALSE || TRUE && FALSE
+TRUE && FALSE || 9 >= 4 && 3 < 6
+99.99 > 100 || 45 < 7.3 || 4 != 4.0
+TRUE && 62 < 62 && 44 >= 44
+```
+
+#### Functions!
+
+##### The basics: 
+**The examples are mostly from SWIRL() so if you get stuck, go back and work through the examples in SWIRL().**
+
+The basic format of a function call in R is as follows: 
+
+function_name <- function(arg1, arg2){
+	Manipulate arguments in some way
+	return a value
+}
+
+You then want to call the function (which is how we have used all the built in functions that we have seen so far in R like mean(), median() etc)
+function_name(value1, value2)
+
+We can do nifty things with functions, like we can in other languages, such as setting default values in our functions. The function below demonstrates that you can use a default when creating a function and then, when you call that function, over-ride the default setting: 
+```
+increment <- function(number, by = 1){
+   	 number + by
+    }
+increment(5)
+# any guesses what this would print to the screen? 
+increment(5,4)
+# this should print out 9 since it has over ridden the default of 1 with the number 4
+
+```
+So now let's see if we can create our own function. First, we'll create a function to draw a 'random number'. This function will call the built in function runif() which randomly generates a uniform distribution of a particular size: 
+```{r}
+randomise<-function(f) f(runif(10000000))
+randomise(mean)
+```
+Here are a few other examples that are not list comprehensions (as the function in the chunk above is). 
+
+R functions don't require an explicit return statements (many languages require return statements) but you should use one anyway so that you develop good programming habits. 
+```{r}
+add_two_numbers<-function(num1,num2){
+    return(num1+num2)
+}
+#
+multiply_two_numbers<-function(num1,num2){
+	return(num1*num2)
+}
+add_two_numbers(1,4)
+```
+##### Fancier than the basics: Higher order functions AKA \textbf{FUNCTIONS THAT CALL OTHER FUNCTIONS}
+You can pass functions as arguments to other functions just like you can pass data to functions. Let's say you define the following functions:
+```{r}
+some_function<-function(func){
+    func(2,4)
+}
+some_function(mean)
+mean(2,4)
+```
+Before we work through some of the normal higher level functions, we should mention anonymous functions. We won't work through any list comprehensions since, in R, when a list comprehension is appropriate, we usually will use a *apply family function (such as lappy, tapply).
+
+```{r}
+#Say you have written the following simple function which takes a function and some data as arguments and applies the function to the data: 
+evaluate <- function(func, dat){
+  func(dat)
+}
+#You can call it using an anonymous function like so: 
+evaluate(function(x){x+1},6)
+```
+Here are the higher order functions:
+
+1. Map
+```{r}
+hundred<-1:100
+hundred
+double_hundred<-Map(function(k){k*2},hundred)
+#stores results in a list of vectors so you have to use a command to unlist them
+#double_hundred
+unlist(double_hundred)
+```
+
+2. Filter
+* selects elements in a vector that meet a the conditions of a criteria
+```{r}
+# instead of defining the function and giving it a name, we can define 'anonymous' functions, which are nameless, and put them into one line of a function
+# we build in our data set, in these cases the numbers between 1(inclusive) and 10(inclusive)
+small.even.numbers<-Filter(function (x) {x %% 2 == 0}, 1:10)
+small.even.numbers
+small.odd.numbers<-Filter(function (x) {x %% 2 == 1}, 1:10)
+small.odd.numbers
+```
+3. Reduce
+```{r}
+#example of reduce, which is more limited than other functions: 
+#let's start with the painfully obvious and then refine the function definition:
+my.sum <- function(x){
+	if(length(x) == 1)
+	{
+		return(x[1])
+	}
+	if (length(x) == 2)
+	{
+		return(x[1] + x[2])
+	}
+	if (length(x) == 3)
+	{
+		return(x[1] + x[2] + x[3])
+	}
+}
+my.sum(c(1,4,9))
+my.sum(4)
+```
+
+Let's take the above and make it more general by adding a loop; after all what happens if we have a something that is larger than 3? 
+```{r}
+my.sum2<-function(x){
+	result<-0
+	for (i in 1:length(x))
+	{
+		result<-result+x[i]
+	}
+ 
+	return(result)
+}
+#call the function just like we have called built in functions
+my.sum2(c(1,4,9,25,36))
+```
+Let's compare this to the built in higher order reduce function: 
+```{r}
+# the name of the addition operation in R is `+`
+my.sum3<- function (x) {Reduce(`+`, x)}
+my.sum3(c(1,4,9,25,36))
+# you can also multiply elements together: 
+my.prod <- function (x) {Reduce(`*`, x)}
+my.prod(c(1,4,9,25,36)) 
+
+my.factorial<-function(n){Reduce(`*`, 1:n)}
+my.factorial(c(7))
+```
+
+

@@ -1,0 +1,370 @@
+---
+title: "chapter_4_example"
+author: "Danielle A Presgraves"
+date: "8/09/2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+Note: This is for Module 5 but it corresponds to Chapter 4 in the R book. 
+
+## What we will cover in this module: 
+1. Review of General Hypothesis testing features: The four steps of hypothesis testing nd definitions such as Null and alternate hypotheses, type I and type II errors, p-values.
+2. The Binomial Distribution and how to use it. This section will include a little programming in R, as well as using built in functions for the binomial test (and comparing the output to the more general proportion test)
+3. Using the tapply() particular function of the general - and powerful! - apply() family of functions. 
+4. ROC (Receiver Operator Curves) and AUC (Area Under Curve). These will require that you review sensitivity and specificity. 
+
+# Hypothesis Testing
+Fundamentally, hypothesis testing answers the question 'does the provided evidence allow us to reject the null hypothesis at a certain level of comfort?'. The level of comfort is quantified by type I ($\alpha$) error and allows us to reject a hypothesis ** even though it is true ** a certain percentage of the time. This comfort level (really, $\alpha = P[rejecting H_{o}|H_{o} true]$) is usually set at around 0.05 because we are mostly okay with rejecting a true null hypothesis around 1 out of every 20 experiments. Note that this is a bit of an unsophisticated definition of hypothesis testing but it is a very applied definition. If you want to polish up your understanding of hypothesis testing, see: https://en.wikipedia.org/wiki/Type_I_and_type_II_errors
+
+As we utilize ROC (Receiver Operator Curves) and calculate AUC (Area Under Curve) to choose the best model from many possible models, you will need to have the details of Type I, Type II errors, as well as Sensitivity and Specificity *firmly* in your brain! We will revisit these definitions in the ROC section in an attempt to help. 
+
+Note that this module is aligned to the structure of chapter 4 in your R Book. There are slightly more details in your R Book so if you get a bit lost, you can refer to that!
+
+## 1. Errors in hypothesis testing: 
+First, to ensure that everyone is caught up with how error is described in statistics, we will investigate a useful analogy to the justice system at the following website: http://www.intuitor.com/statistics/T1T2Errors.html Note: This website used to have a fantastic java applet which nicely illustrated how decreasing type I error leads to increasing type II error. However, it no longer is supported. The key points of this widget are to note that when we decrease type I error (alpha), we automatically increase type II error (beta) since these two errors are (non-linearly) inversely proportional. The only way to improve both type I and type II error rates at the same time is to increase your sample size (n).
+
+I mostly thought that this analogy is useful for understanding the trade offs with error types; the only caution I have for you is that the website describes rejecting the null hypothesis as equivalent to accepting the alternate hypothesis. This is reasonably true when using the justice system as an illustration but it isn't true in science. In science (and statistics) we *NEVER* accept the alternate hypothesis since, among other reasons, there may emerge more data in the future that changes our conclusion. 
+
+The most portable way to think of Type I/II errors is to put them into conditional probability statements: 
+
+Type I = P(Rejecting|Ho is true) = P(Positive test| No Disease Present)
+       = fire alarm with no fire
+
+Type II =  P(NOT Rejecting|Ho is not true) = P(Negative test|Disease is Present)
+      = no fire alarm when there is a fire
+
+Now that we have Type I and Type II errors in our brain, we can move on...
+
+## 2. Binomial distribution:
+To investigate hypothesis testing, we will rely on the most simple and intuitive distribution available to us: The Binomial distribution. 
+
+The binomial distribution is a discrete probability distribution. It describes the outcome of n independent trials in an experiment. Each trial is assumed to have ** only two outcomes**, either success or failure. If the probability of a successful trial is p, then the probability of having x successful outcomes in an experiment of n independent trial is: $f(x)=\binom{n}{x}p^n(1-p)^{n-x}$
+
+A clear - but boring- illustration of a binomial distribution uses coin flips or rolls of die. We can find this at an online simulator, like this one:
+
+A. Online dice roller: https://www.random.org/dice/
+
+Or, we can use a built-in R function to simulate the binomial distribution. In fact, use the help menu (or google) to explore the sample() function. If you are using the help menu, depending on the packages that you are using, you might need to use base::sample(). 
+
+B. *sample()* function in R
+
+We saw this, although we didn't discuss it, when we wrote out the bootstrap simulation last week. We can use it to accomplish the same task as the online dice roller. On the first line of code, we will first roll *five* dice that each have possible values 1 through 6. Just like a real die would. We have, however, rolled 5 of them simultaneously.  
+```{r}
+# roll five dice simultaneously. Die each have possible values of 1 through 6 and # are fair die so 
+# any value (between 1 and 6) has the same chance of facing upwards
+
+# What do we think the argument replace=TRUE means? 
+five_dice<-sample(1:6,5, replace=TRUE)
+# To answer the above question, we can use the same arguments in the sample() but # include replace=FALSE
+five_dice_no_replace<-sample(1:6,5, replace=FALSE)
+# display the results of these two variables:
+five_dice
+five_dice_no_replace
+# What is the argument replace do in the sample() function?
+```
+c. Generating a binomial distribution in R: 
+
+There is a built-in function for the binomial distribution in R called dbinom(). There is a common format among various distributions (dfunction, rfunction, qfunction, pfunction) that we will see in the future for simulating Poisson and normal distributions or randomly generating numbers from those distributions. 
+
+We will look at all four of these functions but usually we are mostly interested in calculating the exact probability of the arguments that have been provided: >dbinom(X, size = n, prob = p) or in generating a random sample of individuals from a binomial distribution: >rbinom(n, size, prob).
+
+```{r}
+# density -we have 5 trials and one of them produce heads in a presumed fair coin which
+# means that each trial has 0.5 probability of producing heads. What is the exact
+# probability of getting 1 heads out of the five trials?
+dbin_exam<-dbinom(1,size=5,prob=0.5)
+dbin_exam
+# what about the total probability of getting 1 or 0 heads? We can do that this way:
+dbin_exam_zero_or_one<-dbinom(0,size=5,prob=0.5)+dbinom(1,size=5,prob=0.5)
+dbin_exam_zero_or_one
+# or we could use the distribution function - cumulative probability. This should give the
+# same result as the cumulative probability calculated above: pbinom returns P(X<=x)
+# Test to make sure that it does!
+pbin_exam<-pbinom(1,size=5,prob=0.5)
+pbin_exam
+# random deviates- generate 5 coin tosses 100 times to see how many heads appear in each of
+# the 100 simulations
+rbin_exam<-rbinom(100,size=5,prob=0.5)
+rbin_exam
+# we can draw this out:
+hist(rbin_exam)
+# quantiles:We can also find the quantiles of a binomial distribution. For example, here is
+# the 95th percentile of a binomial distribution with n = 5 and p=0.5.
+qbin_exam<-qbinom(0.95,5,0.5)
+qbin_exam
+```
+And now, we are going to work through an example from the countbayesie website (here: https://www.countbayesie.com/blog/2015/3/3/6-amazing-trick-with-monte-carlo-simulations) and see how it compares to our built-in binomial function simulation (This is detailed in section 4.3.2 "Sneaking in a little unnecessary programming for practice" section of your R Book): 
+```{r}
+# flip a coin 10 times, what is the probabiliy of getting more than 3 heads? 
+# defining how many times to repeat our simulation
+runs <- 100000
+# defining a new function that sums up the number of times that more than 3 heads appears
+# in the simulation of 10 coin tosses
+one.trial <- function(){
+# use sample to create one iteration of 10 coin tosses add it to #running total with sum
+# function if more than 3 heads
+# if not more than 3 heads return FALSE - so it adds 0 instead of 1
+sum(sample(c(0,1),10,replace=TRUE))>3
+}
+# summing up each trial over the 100000 runs with the built in replicate function which
+# re-evaluates and stores in vector (a little bit like tapply,actually)
+mc.binom<-sum(replicate(runs,one.trial()))/runs
+mc.binom
+```
+Let's compare this answer to what we would see in the built in function pbinom with the same arguments: 
+```{r}
+pbinom(3,10,0.5,lower.tail=FALSE)
+```
+Hopefully they were very similar (although since one is more exact than the other, you don't expect them to be exactly the same.)
+
+## 3. Bumpus data set
+
+We are going to run the Binomial test on the Bumpus dataset (See section 4.4 in the R Book which discuss the Bumpus dataset) and also try out the *tapply* function.  
+```{r}
+bumpus<-read.csv("/Users/daniellepresgraves/Desktop/Bio214/BIOL300 data sets/bumpus.csv")
+attach(bumpus)
+```
+
+```{r, echo=FALSE}
+#let's remember the names of the columns in the attached dataframe. Remember that you # could look at the dataframe by clicking on the blue arrow in your 'environment' #quadrant which will open up your dataframe in a new window. 
+names(bumpus)
+# graph a boxplot. Pick a nifty color like Dark Red in keeping with Bumpus' sinister
+# methodology.
+boxplot(skull.width.in.~survival, col="Dark Red")
+title(main="Are skull widths and survival related?")
+# -----------------------
+# Here is an example of the subset argument! Only slightly tricky thing to remember is that == , the double equal sign, specifies a condition to be evaluated as TRUE whereas =, one equal sign, is assignment
+# So, in the command below subset=sex =="m" means that only individuals who have "m" listed
+# in the sex column are included in the boxplot.
+# ------------------------
+boxplot(Total.length.mm.~survival,subset=sex=="m",col="Green")
+title(main="Total length,mm,in male survival")
+# what about the female birds?
+boxplot(Total.length.mm.~survival,subset=sex=="f")
+title(main="Total length,mm,in female survival",col="Purple")
+# we can stack the results of these previous graphs in a VERY cumbersome way with the
+# following command:
+# I haven't used this command until now but I came across it and it is great! by adding 
+# notch=TRUE as an argument, you can visualize 'notches' which correspond to 95% #
+# confidence intervals.
+boxplot(skull.width.in.~interaction(survival,sex),
+        data=bumpus,notch=TRUE,main="Survival by sex and skull width")
+# I have full confidence that many of you will come up with a better solution. As always:
+# please let me know or your fellow R gurus-in-training if you find something
+```
+let's look at apply functions next (remember that SWIRL has two chapters based on the *apply family* of functions if you are feeling shaky about using those functions). Note that usually in this course, we will be dealing with data that are in dataframes so we will usually use the tappy function. However, there is also a mapply() function for matrix data (like Titanic) and a vapply() function for vector data. 
+
+Here we will do some more basic data exploration. Let's look at median values. 
+```{r}
+all_median<-median(Total.length.mm.)
+all_median
+# --------------
+# tapply!!!!!
+#---------------
+#what if we want to only consider the length by sex of the bird?
+Sex_median<-tapply(Total.length.mm.,sex,median)
+Sex_median
+```
+
+Now we are going to use the *FOUR STEPS* of hypothesis testing to test for differences in proportion of survivors between males and females. We are going to use the two major tests for comparing proportions, binomial test to proportion test, and see if they give the same answers. 
+```{r}
+#how many females survived the storm?
+fem_sur<-sum(survival==TRUE&sex=="f")
+fem_sur
+# how many females did not survive the storm?
+fem_death<-sum(survival==FALSE&sex=="f")
+fem_death
+male_sur<-sum(survival==TRUE&sex=="m")
+male_sur
+# how many females did not survive the storm?
+male_death<-sum(survival==FALSE&sex=="m")
+male_death
+#let's make sure this adds up appropriately
+Total_sur<-sum(survival==TRUE)
+Total_sur
+```
+The four steps for testing the question (The question that allows us to develop a testable null hypothesis, $H_{o}$): were male and female birds equally likely to die during the storm? We could answer this question using a chi squared contingency test but we will need to re-phrase it so that we can answer it with a binomial test (which requires )
+
+### Step 1: formulate a test-able null hypothesis about the POPULATION (note: we are not testing the sample proportions, we are testing the population parameters about survivor proportion using the sample proportions)
+1. Ho: P(females surviving)=P(females killed in storm) = 0.5
+
+This means that even though our sample doesn't contain equal proportions of males and females (we'll investigate that later), we think that the POPULATION that the samples were pulled from has equal proportions or males and females. So we are really asking: what is the probability of a female surviving, if we naively believed that males and females were equally likely to survive. Is our sampled data significantly different from 50%?
+
+###Step 2: choose our test based on the null distribution implied by the null hypothesis
+2. Binomial test (binom.test())
+
+### Step 3: what alpha do we want? 
+3. alpha = 0.05
+
+###Step 4: any CI or additional information to include in our rejection or failure-to-reject the null hypothesis? 
+4. conclude
+
+There are a number of ways of re-phrasing the given null hypothesis in step 1 in such a way that you can use the built in functions. Remember that the table you have counted is: 
+```
+          Survived      Died      Total
+---------------------------------------
+Females       21         28        49
+Males         51         36        87
+---------------------------------------
+              72        64         136
+```
+Putting your data counts into a table format often helps you refine your problem! Possibly the easiest way to test this null hypothesis is to pick females (or males) and then use how many survived (or died) and use the proportion of survivor (or non-survivors) from the other sex. 
+
+This is challenging to explain so I'll just show it to you in the following Rchunk (note that you include steps 2 and 3 in the following chunk since you have to specify your test as a function and your alpha as one of the arguments of the test): 
+```{r}
+# we run TWO tests on this hypothesis since we are comparing and contrasting the 
+# binomial test and the proportion test. 
+# -------------------
+#run the binomial test with the numbers that we collected above. We track the 
+#female survivors. We are going to test the null hypothesis that the proportion of female survivors are 50%.  There are 21 females who survive and a total of 49 females were brought to Bumpus. 
+fem_survival_bin<-binom.test(21,49,p=0.50,alternative="two.sided",conf.level = 0.95)
+fem_survival_bin
+# -----------------------
+#run the prop.test with the same numbers
+fem_survival_prop<-prop.test(21,49,p=0.50,conf.level = 0.95)
+fem_survival_prop
+```
+The results of both of these tests suggest that females and males do not have a significant difference in their survival proportion. The p-value for both tests is higher than 0.05 and the 95% confidence interval of the proportion of female survivors does include the hypothesized null value of 0.50 (it ranges from 0.2911658 to 0.5770986).
+
+We could also ask about the null hypothesis from the male perspective instead of female:
+```{r}
+# we run TWO tests on this hypothesis since we are comparing and contrasting the 
+# binomial test and the proportion test. 
+# -------------------
+#run the binomial test with the numbers that we collected above. We track the 
+# male survivors. We are going to test the null hypothesis that the proportion of male survivors are 50%.  There are 51 males who survive and a total of 49 females were brought to Bumpus. 
+male_survival_bin<-binom.test(51,87,p=0.50,alternative="two.sided",conf.level = 0.95)
+male_survival_bin
+# -----------------------
+#run the prop.test with the same numbers
+male_survival_prop<-prop.test(51,87,p=0.50,conf.level = 0.95)
+male_survival_prop
+```
+The male binomial and proportion tests suggest that we fail to reject the null hypothesis that male survivors are significantly different than 50%, just as the females did. Truthfully, this isn't actually directly testing that females and males have the same survival proportion but it did allow us to familiarize ourselves with the prop.test and binom. test which are important and commonly used tests. To directly test the probability of survival of females to males, we would want to use a contingency test (maybe with an accompanying mosaic plot?). We see this in chapter 5, but I will give you a super quick example here: 
+```{r}
+#convert data to a matrix
+bumpus_alive_dead <-matrix(c(21,51,28,36), ncol=2)
+#run a chisq.test on the matrix
+chisq.test(bumpus_alive_dead)
+# not pretty, nor acceptable in terms of title etc, but we'll discuss how to use mosaicplot properly in either module 1
+# or in module 6/chapter 5 which should be next up after this module...
+mosaicplot(bumpus_alive_dead, xlab="male/female survivors",ylab="female/male initial deaths")
+```
+
+As mentioned, our data is also odd in another way: only about 1/3 of the entire sample of birds collected were female. Maybe, we should also test if the original sample of females brought to Dr. Bumpus is 0.5 (since that is what we expect the proportion to be in the natural population of house sparrows) and therefore that something might be happening with that original selection/sample that is reflective of underlying selection pressures. Maybe more male sparrows were found and brought to Dr. Bumpus because they were bigger or had a characteristic that was different than the female sparrows? Since we expect that 50% of house sparrows in the entire population of house sparrows are female, you can rephrase the above question as: Why then were only 36% of our samples female? Is that a significant difference from the expected 50% of the sample that should be female?  
+
+```{r}
+# test of the proportion of females sampled from a wider population where the females are 50%:
+fem_sampled_bin<-binom.test(49,136,p=0.5,alternative="two.sided",conf.level = 0.95)
+fem_sampled_bin
+#run the prop.test with the same numbers
+fem_sampled_prop<-prop.test(49,136,p=0.5,conf.level = 0.95)
+fem_sampled_prop
+```
+
+hmmmm. It seems like the proportion of females in the original sample brought to Dr. Bumpus was significantly different from 50% so we reject the null hypothesis. I included possible interpretation of this difference above: maybe males were larger or had brighter coloration and were therefore easier to spot by the individuals who found them? I'm not sure we know the answer from this data set. 
+
+## ROC and AUC
+ROC (Receiver Operator Curves) and AUC (Area Under the Curve):
+
+ROC are efficient ways to assess * the fit of many models simultaneously under specific criteria where the key summaries of the model are visualized in one place.* Basically, ROC should help you determine which models fit your data better and allow you to choose the best model. ROC can be used for ANY **binary classifier**, where there are TWO outcomes (logistic regression, Odds Ratio or other model where there are TWO outcomes). Accompanying the ROC is usually the AUC (area under the curve) value which provides a single number summarizing the performance of a particular model. You can graph the ROC and determine the AUC – and the corresponding confidence interval – for each model under consideration to decide which model is superior to another model. 
+
+The drawback of ROC curves is, of course, that some of these key summaries can be challenging to understand initially. Take a moment to understand the following important terms, TP (True Positive), TN (True Negative), FP (False Positive), FN (False Negative). Wikipedia has clear resources that summaries what each of these means and gives several example tables of them. Since ROC and AUC (Area under Curve) are used in fields ranging from engineering, precision medicine, and genomics, I highly recommend that you understand crucial basic terms such as sensitivity, specificity, type I, type II errors, and Power and, of course, the relationships between them all! https://en.wikipedia.org/wiki/Receiver_operating_characteristic
+```
+                       Disease                     No Disease      
+---------------------------------------------------------------
+Positive Test       True Positive(TP)             False Positive (FP)       
+Negative Test       False Negative (FN)           True Negative (TN)
+---------------------------------------------------------------
+```
+Sensitivity (same as Power):
+$True Positive Rate = P(+ test|Disease) = count TP/(count TP+ count FN)$  
+					                       
+Type I error:
+$False Positive Rate =  P(+test| NO Disease)= count FP/(count FP + count TN)$   
+					                             
+Specificity:
+$True Negative Rate = P(- test| No Disease)= count TN/(count FP +count TN)$		
+              				              
+Accuracy:
+$count TP + count TN/(total count in entire population) = (countTP + countTN)/(count TP+countFP+countTN+countFN)$
+		    
+Prevalence:  True # of individuals with condition in a population (usually estimated from population surveys)
+
+### G-Wiz library/package 
+In genomics, we increasingly see ROC/AUC when considering if a particular genetic variant (often a SNP, but also other variants) is associated with a disease. Note: traditionally, this has been done with Odds Ratio tests, which I mention just in case you are used to seeing that. We might even see it in this course later (the OR test is ubitiquous, intuitive, and useful!). However, AUROC (this is another way we see ROC/AUC written) gives a way to compare "oranges" to "oranges" since it is often used for other (non-DNA variant) biomarkers. This means that over the last 5 years, AUROC has been increasingly used alongside Odds Ratio and Hazard scores. Besides the possibility of association of the SNP with the disease, we want to know HOW the variant contributes to the disease, that is: Does the variant (or, really, linked nucleotide) contribute in a recessive, dominant, or co-Dominant, additive etc. manner? 
+
+If you are interested in the application of AUROC to GWAS data, you can download the (fairly) new library called "G-Wiz". This package requires that you have R version 4.0 or newer and you might find that you need to update your other (dependencies) pacakges when you update R. I haven't worked through the examples in it myself, despite being intrigued, but here is the paper that describes this package: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6894795/ . I wanted to mention this package as part of a general observation that there are a number of ROC/AUC pacakges available. the G-WIZ package seems to be focused on GWAS data; other packages will focus (or optimize) other types of data. 
+
+### pROC library/package
+You will find a summary of the pROC library here: https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-12-77
+and the help pdf here: 
+https://cran.r-project.org/web/packages/pROC/pROC.pdf
+
+We are going to use the older and more established library, pROC.This library comes with a dataset called aSAH (Aneurysmal subarachnoid Hemorrhage Data). This data set, pulled from a paper (https://link.springer.com/article/10.1007/s00134-009-1641-y), contains 113 observations (patients) on 7 variables: 
+
+1. gos6 (Glasgow score at 6 months)
+
+2. WFNS (World Federation of Neurological Surgeons) score when patient was admitted
+
+3. Gender 
+
+4. Age
+
+5. s100b - calcium binding protein which is a biomarker the blood brain barrier (since it is glial specific) and Central Nervous System. Elevated levels suggest
+Nervous System damage.
+
+6. NDKA - Nucleoside Diphosphate Kinase A. This is another brain specific biomarker/enzyme
+
+7. outcome: good or poor
+
+Stop! You will need to install the pROC library using the "Packages" tab in the fourth quadrant (lower right) of your RStudio. 
+You can then load the library and check out the dataset aSAH. 
+```{r}
+library(pROC)
+#let's peek at the data set embedded in this library
+head(aSAH)
+```
+We will now work through an example using Subarachnoid Hemorrhage Data.  
+```{r}
+# we are creating roc objects which result from the function 'roc' from pROC # library. 
+# we want the outcome - presumably the dependent variable- along with one of the 
+# 6 factors that were previously identified as impacting the outcome.
+# remember that the $ means we are picking a particular column from the aSAH dataframe
+# the x argument is the outcome (response) which we think is impacted by whatever
+# column we put in the y axis (predictor). So in rocobjs100b, we think that the outcome
+# is impacted by the level of s100b in the patients blood. 
+rocobjs100b <- roc(aSAH$outcome, aSAH$s100b)
+rocobjwfns <- roc(aSAH$outcome, aSAH$wfns)
+```
+ 
+Now we will use ggplot2 to graph multiple curves simultaneously. Make sure ggplot2 is loaded!
+```{r}
+library(ggplot2)
+# note: you want to use the argument legacy.axes=TRUE. 
+# This will ensure that the y axis is "1-specificity" which is what we want
+# for ROC curves!
+g<-ggroc(rocobjs100b, legacy.axes = TRUE)
+# add labels to x and y axis and a grey dashed line that gives a y=x line
+# this y=x line is where the model is better than random 
+g + ggtitle("A ROC curve for s100b") + xlab("FPR") + ylab("TPR") + geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="darkgrey", linetype="dashed")
+
+```
+We can now put TWO (or more) ROC curves on the same graph. 
+```{r}
+#bundle THREE ROC objects, rocobjs100b, rocobjwfns and a third object that is 
+# created within this function, ndka = rock(aSAH$outcome, aSAH$ndka)
+g2 <- ggroc(list(s100b=rocobjs100b, wfns=rocobjwfns))
+
+g2+scale_colour_manual(values = c("red", "blue"))+ ggtitle("ROC curves for s100b, wfns")
+```
+```{r}
+auc(rocobjs100b)
+auc(rocobjwfns)
+```
+Since the AUC value is between 0.5 and 1, these would both be considered good classifiers. 
+```{r}
+detach(bumpus)
+```
+
