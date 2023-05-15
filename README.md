@@ -20,6 +20,8 @@ Here are the syllabuses for the following courses that I have created and taught
 8. **"A Synthesis of Computational Biology for Seniors"**: A course intended to synthesize technical skills learned during an undergraduate as a computational biology major and add some sprinkling of professional skills coaching. 
 
 <img width="579" alt="Screen Shot 2023-02-22 at 3 30 39 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/80bec0a5-e2b5-402e-9a12-5147b0cbc10f">
+
+
 --------------------------------------------------------
 I have also added the general outlines of two curriculum pathways, S.P.A.R.C. and I.H.E.C., that integrate experiential learning with skills necessary in research labs and for medical training. 
 --------------------------------------------------------
@@ -33,6 +35,8 @@ I have also added the general outlines of two curriculum pathways, S.P.A.R.C. an
 <img width="603" alt="Screen Shot 2023-05-11 at 4 29 47 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/538403ff-5b24-45cc-abec-31712faf9adb">
 
 <img width="636" alt="Screen Shot 2023-05-11 at 4 29 57 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/ae509d4b-5533-4995-9827-78c8d1ae31d8">
+
+
 --------------------------------------------------------
 Finally, this is a summary image from a larger presentation on planning out and optimizing your undergraduate experience. This was specifically targeting pre-health students, but it is generalizable to students with wider interests.  
 --------------------------------------------------------
