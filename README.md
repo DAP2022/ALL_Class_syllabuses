@@ -13,7 +13,7 @@ Here are the syllabuses for the following courses that I have created and taught
 3. **Introduction to programming for biologists' (Python)**
     a. Syllabus
     b. Jupyter notebooks for the course material
-    c. I have not yet included links to the videos of this course yet. 
+    c. I have not yet included links to the videos of this course. 
 4. **"Basic Bioinformatics for yeast"**: these are pdfs that I created for a semester long experimental course. 
 5. **"Exploring Bias in Algorithms: the New 'Jim Code'"** This course fulfilled an upper level writing course. 
 6. **"Focusing on Bayes' Theorem"** This course also fulfilled an upper level writing course. 
