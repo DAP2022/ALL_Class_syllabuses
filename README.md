@@ -14,7 +14,7 @@ Here are the syllabuses for the following courses that I have created and taught
     a. Syllabus
     b. Jupyter notebooks for the course material
     c. I have not yet included links to the videos of this course. 
-4. **"Basic Bioinformatics for yeast"**: these are pdfs that I created for a semester long experimental course. 
+4. **"Basic Bioinformatics for yeast"**: these are pdfs that I created as a guest lecturer for a semester long experimental course. 
 5. **"Exploring Bias in Algorithms: the New 'Jim Code'"** This course fulfilled an upper level writing course. 
 6. **"Focusing on Bayes' Theorem"** This course also fulfilled an upper level writing course. 
 8. **"A Synthesis of Computational Biology for Seniors"**: A course intended to synthesize technical skills learned during an undergraduate as a computational biology major and add some sprinkling of professional skills coaching. 
