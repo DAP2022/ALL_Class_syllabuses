@@ -19,7 +19,7 @@ Here are the syllabuses for the following courses that I have created and taught
 5. **"Exploring Bias in Algorithms: the New 'Jim Code'"** This course fulfilled an upper level writing course. 
 6. **"Focusing on Bayes' Theorem"** This course also fulfilled an upper level writing course. 
 8. **"A Synthesis of Computational Biology for Seniors"**: A course intended to synthesize technical skills learned during an undergraduate as a computational biology major and add some sprinkling of professional skills coaching. 
-9. **"Precision Medicine: Customizing Care through Genetics"**  https://rochesteronline.precollegeprograms.org/medicine This was a collaboration between the University of Rochester and Kaplan and the material was co-developed between me and Alexis Stein, Ph.D. I have not included a syllabus, but I have pasted the link in case you are interested.  
+9. **"Precision Medicine: Customizing Care through Genetics"**  https://rochesteronline.precollegeprograms.org/medicine This was a collaboration between the University of Rochester and Kaplan and the material was co-developed between me and Alexis Stein, Ph.D. and the target audience was high school students. I have not included a syllabus, but I have pasted the link in case you are interested.  
 
 <img width="579" alt="Screen Shot 2023-02-22 at 3 30 39 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/80bec0a5-e2b5-402e-9a12-5147b0cbc10f">
 
