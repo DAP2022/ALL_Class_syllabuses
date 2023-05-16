@@ -1,4 +1,5 @@
 # A Modern Curriculum for Biologists
+In this folder, you can find a selection of courses (and accompanying jupyter notebooks, rmd files, and/or pdfs of lectures) that represent many of the fundamental skills of  higher education. When creating material for courses, I have especially focused on: cultivating and improving critical thinking ("what are the important features in this dataset?"), quantifying uncertainty ("How much can we trust these data under specific models"), evaluating data quality ("Do these data represent objective 'truth' about a relationship/pattern?" and "What are the assumptions of our data/experiment"?), and writing effectively and clearly about ambiguity. 
 
 ## Section 1: Syllabuses and Material
 Here are the syllabuses for the following courses that I have created and taught at the University of Rochester. 
@@ -42,7 +43,7 @@ Here are the syllabuses for the following courses that I have created and taught
 
 --------------------------------------------------------
 ## Section 3: Advising
-#### Finally, this is a summary image from a larger presentation on planning out and optimizing your undergraduate experience. I have held multiple advising positions (Biology BA, REMS co-Director, Health Committee etc) and this is just one particular presentaion,specifically targeting pre-health students. It is generalizable to students with wider interests and captures the philosophy of how to map out your goals effectively to design (as much as possible) what you want to get out of your degree.  
+#### Finally, this is a summary image from a larger presentation on planning out and optimizing your undergraduate experience. I have held multiple advising positions (Biology BA, REMS co-Director, Health Committee etc) and this is just one particular presentation, specifically targeting pre-health students. It is generalizable to students with wider interests and captures the philosophy of how to map out your goals effectively to design (as much as possible) what you want to get out of your degree, an evergreen theme for my advising. 
 --------------------------------------------------------
 <img width="520" alt="Screen Shot 2023-05-15 at 1 09 57 PM" src="https://github.com/DAP2022/A_Modern_Curriculum/assets/102999452/29f674ba-fb99-41b5-8d3b-dd566726d9c4">
 
